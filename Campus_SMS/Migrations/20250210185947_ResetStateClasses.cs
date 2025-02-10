@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Campus_SMS.Migrations
 {
     /// <inheritdoc />
-    public partial class EntityUpload : Migration
+    public partial class ResetStateClasses : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -63,23 +63,6 @@ namespace Campus_SMS.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Courses", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmsInteractions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
-                    IncomingSmsMessage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    AiSmsResponse = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
-                    TimeReceived = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TimeResponded = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmsInteractions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -188,6 +171,107 @@ namespace Campus_SMS.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Announcements",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OutboundMessage = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    CourseId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Announcements", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Announcements_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUserClassCourse",
+                columns: table => new
+                {
+                    AppUsersId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClassCoursesId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUserClassCourse", x => new { x.AppUsersId, x.ClassCoursesId });
+                    table.ForeignKey(
+                        name: "FK_AppUserClassCourse_AspNetUsers_AppUsersId",
+                        column: x => x.AppUsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AppUserClassCourse_Courses_ClassCoursesId",
+                        column: x => x.ClassCoursesId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ClassProfessorMappings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ClassCourseId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClassProfessorMappings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ClassProfessorMappings_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ClassProfessorMappings_Courses_ClassCourseId",
+                        column: x => x.ClassCourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmsInteractions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
+                    IncomingSmsMessage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    AiSmsResponse = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
+                    TimeReceived = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TimeResponded = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CourseId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmsInteractions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SmsInteractions_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Announcements_CourseId",
+                table: "Announcements",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUserClassCourse_ClassCoursesId",
+                table: "AppUserClassCourse",
+                column: "ClassCoursesId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -226,11 +310,32 @@ namespace Campus_SMS.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClassProfessorMappings_AppUserId",
+                table: "ClassProfessorMappings",
+                column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClassProfessorMappings_ClassCourseId",
+                table: "ClassProfessorMappings",
+                column: "ClassCourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SmsInteractions_CourseId",
+                table: "SmsInteractions",
+                column: "CourseId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Announcements");
+
+            migrationBuilder.DropTable(
+                name: "AppUserClassCourse");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -247,7 +352,7 @@ namespace Campus_SMS.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Courses");
+                name: "ClassProfessorMappings");
 
             migrationBuilder.DropTable(
                 name: "SmsInteractions");
@@ -257,6 +362,9 @@ namespace Campus_SMS.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Courses");
         }
     }
 }

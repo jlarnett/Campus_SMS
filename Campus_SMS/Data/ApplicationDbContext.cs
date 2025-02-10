@@ -15,6 +15,8 @@ namespace Campus_SMS.Data
         public DbSet<SmsInteraction> SmsInteractions { get; set; }
         public DbSet<ClassCourse> Courses { get; set; }
         public DbSet<Announcement> Announcements { get; set; }
+        public DbSet<ClassProfessor> ClassProfessorMappings { get; set; }
+
 
 
     }
