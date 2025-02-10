@@ -22,6 +22,21 @@ namespace Campus_SMS.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AppUserClassCourse", b =>
+                {
+                    b.Property<string>("AppUsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ClassCoursesId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AppUsersId", "ClassCoursesId");
+
+                    b.HasIndex("ClassCoursesId");
+
+                    b.ToTable("AppUserClassCourse");
+                });
+
             modelBuilder.Entity("Campus_SMS.Entities.Announcement", b =>
                 {
                     b.Property<int>("Id")
@@ -66,6 +81,29 @@ namespace Campus_SMS.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("Campus_SMS.Entities.ClassProfessor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("ClassCourseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("ClassCourseId");
+
+                    b.ToTable("ClassProfessorMappings");
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.SmsInteraction", b =>
@@ -313,6 +351,21 @@ namespace Campus_SMS.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AppUserClassCourse", b =>
+                {
+                    b.HasOne("Campus_SMS.Entities.User.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AppUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Campus_SMS.Entities.ClassCourse", null)
+                        .WithMany()
+                        .HasForeignKey("ClassCoursesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Campus_SMS.Entities.Announcement", b =>
                 {
                     b.HasOne("Campus_SMS.Entities.ClassCourse", "Course")
@@ -322,6 +375,21 @@ namespace Campus_SMS.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("Campus_SMS.Entities.ClassProfessor", b =>
+                {
+                    b.HasOne("Campus_SMS.Entities.User.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("Campus_SMS.Entities.ClassCourse", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassCourseId");
+
+                    b.Navigation("AppUser");
+
+                    b.Navigation("Class");
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.SmsInteraction", b =>

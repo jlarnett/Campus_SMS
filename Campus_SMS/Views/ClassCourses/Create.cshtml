@@ -1,0 +1,40 @@
+﻿@model Campus_SMS.Entities.ClassCourse
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1 class="text-center">Add New Class</h1>
+
+<hr />
+<div class="row p-2">
+    <div class="col"></div>
+    <div class="col-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="ClassDescription" class="control-label"></label>
+                <input asp-for="ClassDescription" class="form-control"/>
+                <span asp-validation-for="ClassDescription" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UsiClassIdentifier" class="control-label"></label>
+                <input asp-for="UsiClassIdentifier" class="form-control"/>
+                <span asp-validation-for="UsiClassIdentifier" class="text-danger"></span>
+            </div>
+            <div class="form-group d-grid gap-2">
+                <input type="submit" value="Create" class="btn btn-primary btn-block" />
+            </div>
+        </form>
+    </div>
+    <div class="col"></div>
+</div>
+<hr />
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
