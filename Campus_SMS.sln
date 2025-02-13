@@ -5,6 +5,8 @@ VisualStudioVersion = 17.10.34804.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Campus_SMS", "Campus_SMS\Campus_SMS.csproj", "{388F3E19-53AA-4233-BF4E-E384A48B2AEC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Campus_SMS.Tests", "Campus_SMS.Tests\Campus_SMS.Tests.csproj", "{4ABD3E8F-F41E-4C96-89B3-A11BE376A94E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{388F3E19-53AA-4233-BF4E-E384A48B2AEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{388F3E19-53AA-4233-BF4E-E384A48B2AEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{388F3E19-53AA-4233-BF4E-E384A48B2AEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ABD3E8F-F41E-4C96-89B3-A11BE376A94E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ABD3E8F-F41E-4C96-89B3-A11BE376A94E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ABD3E8F-F41E-4C96-89B3-A11BE376A94E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ABD3E8F-F41E-4C96-89B3-A11BE376A94E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
