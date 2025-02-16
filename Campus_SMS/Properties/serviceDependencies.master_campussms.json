@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "mssql3": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('serviceConnectorResourceGroupName')]/providers/Microsoft.Web/sites/CampusSMS/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsDatabaseConnection1_AF7E7A495C",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/campus-sms-server-prod/databases/CampusSMSDB",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:DatabaseConnection1"
+    },
+    "secrets2": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('serviceConnectorResourceGroupName')]/providers/Microsoft.Web/sites/CampusSMS/providers/Microsoft.ServiceLinker/linkers/VaultUri1_F084D1D0FE",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.KeyVault/vaults/NHASoftwarevault",
+      "type": "secrets.keyVault",
+      "connectionId": "VaultUri1",
+      "dynamicId": null
+    },
+    "secrets1": {
+      "ignored": "true",
+      "type": "secrets",
+      "connectionId": "VaultUri"
+    }
+  }
+}
