@@ -7,6 +7,8 @@ public class AiService
 {
     private readonly string _apiKey = "APIKEY"; // Replace with OpenAI API key
 
+
+
     public async Task<string> GenerateResponseAsync(string studentMessage, string syllabusText)
     {
         var client = new ChatClient("gpt-4o", _apiKey);
