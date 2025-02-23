@@ -12,12 +12,12 @@
 <hr />
 <form asp-action="Edit">
     <div class="row p-2">
-        <div class="col"></div>
-        <div class="col-4">
+        <div class="col-6 border border-primary rounded-2">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="ClassDescription" class="control-label"></label>
-                <input asp-for="ClassDescription" class="form-control" />
+                <textarea asp-for="ClassDescription" class="form-control">
+                </textarea>
                 <span asp-validation-for="ClassDescription" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -26,13 +26,13 @@
                 <span asp-validation-for="UsiClassIdentifier" class="text-danger"></span>
             </div>
         </div>
-        <div class="col-4">
+        <div class="col-6 border border-secondary rounded-2">
 
             <ul>
             </ul>
 
 
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-hover" id="AppUserIdsTable">
                 <thead>
                     <tr>
                         <th scope="col">Has Access</th>
@@ -80,4 +80,10 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready( function () {
+            $('#AppUserIdsTable').DataTable();
+        });
+    </script>
 }
