@@ -141,15 +141,15 @@ namespace Campus_SMS.Controllers
             }
 
             List<AppUserCheckboxViewModel> userCheckboxVm = new List<AppUserCheckboxViewModel>();
-            var users = _userManager.Users;
+            var users = await _userManager.Users.ToListAsync();
 
             foreach (var user in users)
             {
                 userCheckboxVm.Add(new AppUserCheckboxViewModel()
                 {
                     Id = user.Id,
-                    Name = user.Email,
-                    IsChecked = await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(id) && c.AppUserId.Equals(user.Id))
+                    Name = user.Email ?? string.Empty,
+                    IsChecked = await _context.ClassProfessorMappings.AnyAsync(c => c.AppUserId != null && c.ClassCourseId.Equals(id) && c.AppUserId.Equals(user.Id))
                 });
             }
 
