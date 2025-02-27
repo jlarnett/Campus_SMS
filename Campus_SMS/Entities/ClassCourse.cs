@@ -17,5 +17,8 @@ namespace Campus_SMS.Entities
         public string UsiClassIdentifier { get; set; }
 
         public List<AppUser> AppUsers { get; set; } = [];
+
+        // New property to store course documents (as file paths or URLs)
+        public string CourseDocuments { get; set; }
     }
 }

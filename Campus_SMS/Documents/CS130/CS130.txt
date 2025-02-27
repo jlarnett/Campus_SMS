@@ -1,0 +1,25 @@
+CS 130 Syllabus
+Introduction to Computing
+Revised: August 2018
+
+Course Description
+The course is an introduction to programming via an introduction to basics of computing, HTML web development, data analysis, and programming. In addition to you will consider the social implications of computers, the Internet, and related technologies. In learning these skills and concepts, not only will you be able to make informed choices about computing technologies, you will be able to communicate your opinions professionally and know why computing is important in your career goals.
+
+Notes
+3 Credit hours.
+
+Objectives
+Learn to differentiate basic components of a computer and know their purpose.
+Understand how to structure information for online presentation as a web page.
+Know how to style an HTML web page and its contents using Cascading Style Sheets (CSS).
+Perform basic data analytics and visualization using online tools.
+Learn the basics of computer programming including variables, literals, control flow (selection and iteration), and if time permits, function definitions, function calls, and parameter passing.
+Gain an appreciation for the social and ethical implications of computing technology.
+Text
+Eric Freemen, Elisabeth Robson, Head First HTM5 Programming, O’Reilly Media Ltd, 2011.
+Online resources will be used extensively. 
+Grading Procedure
+Grading procedures and factors influencing course grade are left to the discretion of individual instructors, subject to general university policy.
+
+Attendance Policy
+Attendance policy is left to the discretion of individual instructors, subject to general university policy.

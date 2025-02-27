@@ -11,7 +11,7 @@ namespace Campus_SMS.Data
             : base(options)
         {
         }
-
+        public DbSet<SMSUser> SmsUsers { get; set; }
         public DbSet<SmsInteraction> SmsInteractions { get; set; }
         public DbSet<ClassCourse> Courses { get; set; }
         public DbSet<Announcement> Announcements { get; set; }

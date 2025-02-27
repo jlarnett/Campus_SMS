@@ -89,7 +89,7 @@ namespace Campus_SMS.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds")] ClassCourseDto classCourseDto)
+        public async Task<IActionResult> Create([Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds","CourseDocuments")] ClassCourseDto classCourseDto)
         {
             if (ModelState.IsValid)
             {
@@ -97,6 +97,7 @@ namespace Campus_SMS.Controllers
                 {
                     UsiClassIdentifier = classCourseDto.UsiClassIdentifier,
                     ClassDescription = classCourseDto.ClassDescription,
+                    CourseDocuments = classCourseDto.CourseDocuments
                 };
 
                 _context.Add(classCourse);
@@ -158,6 +159,7 @@ namespace Campus_SMS.Controllers
                 Id = classCourse.Id,
                 ClassDescription = classCourse.ClassDescription,
                 UsiClassIdentifier = classCourse.UsiClassIdentifier,
+                CourseDocuments = classCourse.CourseDocuments,
                 AppUserIds = userCheckboxVm.ToArray()
             };
 
@@ -169,7 +171,7 @@ namespace Campus_SMS.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds")] ClassCourseDto classCourseDto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds","CourseDocuments")] ClassCourseDto classCourseDto)
         {
             if (id != classCourseDto.Id)
             {
@@ -185,7 +187,8 @@ namespace Campus_SMS.Controllers
                     {
                         Id = classCourseDto.Id,
                         ClassDescription = classCourseDto.ClassDescription,
-                        UsiClassIdentifier = classCourseDto.UsiClassIdentifier
+                        UsiClassIdentifier = classCourseDto.UsiClassIdentifier,
+                        CourseDocuments = classCourseDto.CourseDocuments
                     };
 
                      _context.Update(classCourse);
