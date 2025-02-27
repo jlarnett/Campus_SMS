@@ -58,7 +58,8 @@ namespace Campus_SMS.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ClassDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    UsiClassIdentifier = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false)
+                    UsiClassIdentifier = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    CourseDocuments = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
                 },
                 constraints: table =>
                 {
