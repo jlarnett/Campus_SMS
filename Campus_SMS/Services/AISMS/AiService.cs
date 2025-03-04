@@ -5,32 +5,20 @@ using OpenAI.Files;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Campus_SMS.Data;
-using Campus_SMS.Entities;
-using Microsoft.EntityFrameworkCore;
-using System.IO;
-using System.Linq;
 using System.Text;
-using PdfSharp.Pdf;
-using PdfSharp.Pdf.IO;
-using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
 using DocumentFormat.OpenXml.Packaging;
-using System.Reflection.PortableExecutable;
-using System.Net.Http.Headers;
-using System.Text.Json;
 
 public class AiService
 {
     private readonly string _apiKey;
     private readonly ApplicationDbContext _context;
-    private readonly IConfiguration _configuration;
 
 
     public AiService(ApplicationDbContext context, IConfiguration configuration)
     {
         _context = context;
-        _apiKey = configuration["OpenAI:_apiKey"];
-
+        _apiKey = configuration.GetValue<string>("OpenAI:RobertAPIKey") ?? string.Empty;
     }
 
     public async Task<string> GenerateResponseAsync(string phoneNumber, string studentMessage, string syllabusPath)
