@@ -16,7 +16,8 @@ namespace Campus_SMS.Dto
         [MaxLength(10)]
         public string UsiClassIdentifier { get; set; }
 
-        public string CourseDocuments { get; set; }
+        public string? CourseDocuments { get; set; }
+        public string? JoinKey { get; set; }
 
         public AppUserCheckboxViewModel[] AppUserIds { get; set; } = [];
     }
