@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Campus_SMS.Data;
 using System.Text;
-using iTextSharp.text.pdf.parser;
 using DocumentFormat.OpenXml.Packaging;
 
 public class AiService
@@ -33,7 +32,7 @@ public class AiService
             .ToList();
 
         // Get all text from syllabus files in the directory
-        syllabusPath = ReadSyllabusFiles(syllabusPath);
+        //syllabusPath = ReadSyllabusFiles(syllabusPath);
 
         // Create a chat request using a list of ChatMessage objects.
         var chatRequest = new List<ChatMessage>
@@ -68,48 +67,48 @@ public class AiService
         return chatResponse;
     }
 
-    // Reads all syllabus files in a directory and extracts text
-    private string ReadSyllabusFiles(string directoryPath)
-    {
-        if (!Directory.Exists(directoryPath))
-        {
-            return "Error: Syllabus directory not found.";
-        }
+    //// Reads all syllabus files in a directory and extracts text
+    //private string ReadSyllabusFiles(string directoryPath)
+    //{
+    //    if (!Directory.Exists(directoryPath))
+    //    {
+    //        return "Error: Syllabus directory not found.";
+    //    }
 
-        var textBuilder = new StringBuilder();
+    //    var textBuilder = new StringBuilder();
 
-        foreach (var filePath in Directory.GetFiles(directoryPath))
-        {
-            string extension = System.IO.Path.GetExtension(filePath).ToLower();
+    //    foreach (var filePath in Directory.GetFiles(directoryPath))
+    //    {
+    //        string extension = System.IO.Path.GetExtension(filePath).ToLower();
 
-            string fileText = extension switch
-            {
-                ".txt" => File.ReadAllText(filePath),
-                ".pdf" => ExtractTextFromPdf(filePath),
-                ".docx" => ExtractTextFromDocx(filePath),
-                _ => ""
-            };
+    //        string fileText = extension switch
+    //        {
+    //            ".txt" => File.ReadAllText(filePath),
+    //            ".pdf" => ExtractTextFromPdf(filePath),
+    //            ".docx" => ExtractTextFromDocx(filePath),
+    //            _ => ""
+    //        };
 
-            if (!string.IsNullOrWhiteSpace(fileText))
-            {
-                textBuilder.AppendLine($"--- {System.IO.Path.GetFileName(filePath)} ---\n{fileText}\n");
-            }
-        }
+    //        if (!string.IsNullOrWhiteSpace(fileText))
+    //        {
+    //            textBuilder.AppendLine($"--- {System.IO.Path.GetFileName(filePath)} ---\n{fileText}\n");
+    //        }
+    //    }
 
-        return textBuilder.ToString();
-    }
+    //    return textBuilder.ToString();
+    //}
 
-    // Extract text from PDFs
-    private string ExtractTextFromPdf(string filePath)
-    {
-        StringBuilder text = new();
-        using var reader = new iTextSharp.text.pdf.PdfReader(filePath);
-        for (int i = 1; i <= reader.NumberOfPages; i++)
-        {
-            text.Append(PdfTextExtractor.GetTextFromPage(reader, i));
-        }
-        return text.ToString();
-    }
+    //// Extract text from PDFs
+    //private string ExtractTextFromPdf(string filePath)
+    //{
+    //    StringBuilder text = new();
+    //    using var reader = new iTextSharp.text.pdf.PdfReader(filePath);
+    //    for (int i = 1; i <= reader.NumberOfPages; i++)
+    //    {
+    //        text.Append(PdfTextExtractor.GetTextFromPage(reader, i));
+    //    }
+    //    return text.ToString();
+    //}
 
     // Extract text from DOCX
     private string ExtractTextFromDocx(string filePath)
