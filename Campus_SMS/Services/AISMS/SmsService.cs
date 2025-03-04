@@ -13,13 +13,13 @@ public class SmsService
     private readonly string _fromPhoneNumber;
     private readonly ApplicationDbContext _context;
     private readonly AiService _aiService;
-    private readonly IConfiguration _configuration;
 
     public SmsService(ApplicationDbContext context, IConfiguration configuration, AiService aiService)
     {
-        _accountSid = configuration["Twilio:_accountSid"];
-        _authToken = configuration["Twilio:_authToken"];
-        _fromPhoneNumber = configuration["Twilio:_fromPhoneNumber"];
+        _accountSid = configuration.GetValue<string>("Twilio:AccountSID") ?? string.Empty;
+        _authToken = configuration.GetValue<string>("Twilio:AuthToken") ?? string.Empty;
+        _fromPhoneNumber = configuration.GetValue<string>("Twilio:FromPhoneNumber") ?? string.Empty;
+
         _context = context;
         _aiService = aiService;
         TwilioClient.Init(_accountSid, _authToken);
