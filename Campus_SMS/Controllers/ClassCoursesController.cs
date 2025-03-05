@@ -84,6 +84,26 @@ namespace Campus_SMS.Controllers
             return View(dto);
         }
 
+        //generates a random unique join key
+        private async Task<string> GenerateUniqueJoinKeyAsync(string usiIdentifier)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            string randomPart;
+            string joinKey;
+
+            do
+            {
+                randomPart = new string(Enumerable.Repeat(chars, 4)
+                    .Select(s => s[random.Next(s.Length)]).ToArray());
+
+                joinKey = $"{usiIdentifier}-{randomPart}";
+
+            } while (await _context.Courses.AnyAsync(c => c.JoinKey == joinKey));
+
+            return joinKey;
+        }
+
         // POST: ClassCourses/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -93,14 +113,33 @@ namespace Campus_SMS.Controllers
         {
             if (ModelState.IsValid)
             {
+                var JoinKey = await GenerateUniqueJoinKeyAsync(classCourseDto.UsiClassIdentifier); // Generate the JoinKey
                 var classCourse = new ClassCourse()
                 {
                     UsiClassIdentifier = classCourseDto.UsiClassIdentifier,
                     ClassDescription = classCourseDto.ClassDescription,
+                    JoinKey = JoinKey,
+                    CourseDocuments = "Documents/" + JoinKey
                 };
 
                 _context.Add(classCourse);
                 var result = await _context.SaveChangesAsync();
+
+                // Get the current working directory
+                string currentDirectory = Directory.GetCurrentDirectory();
+
+                // Define the path for the "Documents" folder
+                string FolderPath = Path.Combine(currentDirectory, "Documents");
+
+                //Path for course documents
+                string newFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+
+                // Check if the "Documents" folder already exists
+                if (Directory.Exists(FolderPath))
+                {
+                    // Create the new course material folder
+                    Directory.CreateDirectory(newFolderPath);
+                }
 
                 if (result > 0 && classCourseDto.AppUserIds.Any(c => c.IsChecked))
                 {
@@ -119,6 +158,7 @@ namespace Campus_SMS.Controllers
                     if (professorMappingResult == 0)
                         return BadRequest();
                 }
+
 
                 return RedirectToAction(nameof(Index));
             }
@@ -141,15 +181,15 @@ namespace Campus_SMS.Controllers
             }
 
             List<AppUserCheckboxViewModel> userCheckboxVm = new List<AppUserCheckboxViewModel>();
-            var users = _userManager.Users;
+            var users = await _userManager.Users.ToListAsync();
 
             foreach (var user in users)
             {
                 userCheckboxVm.Add(new AppUserCheckboxViewModel()
                 {
                     Id = user.Id,
-                    Name = user.Email,
-                    IsChecked = await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(id) && c.AppUserId.Equals(user.Id))
+                    Name = user.Email ?? string.Empty,
+                    IsChecked = await _context.ClassProfessorMappings.AnyAsync(c => c.AppUserId != null && c.ClassCourseId.Equals(id) && c.AppUserId.Equals(user.Id))
                 });
             }
 
@@ -158,9 +198,10 @@ namespace Campus_SMS.Controllers
                 Id = classCourse.Id,
                 ClassDescription = classCourse.ClassDescription,
                 UsiClassIdentifier = classCourse.UsiClassIdentifier,
+                CourseDocuments = classCourse.CourseDocuments,
+                JoinKey = classCourse.JoinKey,
                 AppUserIds = userCheckboxVm.ToArray()
             };
-
             return View(dto);
         }
 
@@ -169,8 +210,9 @@ namespace Campus_SMS.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds")] ClassCourseDto classCourseDto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds,CourseDocuments,JoinKey")] ClassCourseDto classCourseDto)
         {
+
             if (id != classCourseDto.Id)
             {
                 return NotFound();
@@ -180,15 +222,16 @@ namespace Campus_SMS.Controllers
             {
                 try
                 {
-
                     var classCourse = new ClassCourse()
                     {
                         Id = classCourseDto.Id,
                         ClassDescription = classCourseDto.ClassDescription,
-                        UsiClassIdentifier = classCourseDto.UsiClassIdentifier
+                        UsiClassIdentifier = classCourseDto.UsiClassIdentifier,
+                        CourseDocuments = classCourseDto.CourseDocuments,
+                        JoinKey = classCourseDto.JoinKey
                     };
 
-                     _context.Update(classCourse);
+                    _context.Update(classCourse);
                      var result = await _context.SaveChangesAsync();
 
                         foreach (var user in classCourseDto.AppUserIds)
@@ -262,14 +305,81 @@ namespace Campus_SMS.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var classCourse = await _context.Courses.FindAsync(id);
+
+            // Set CourseId to null in SmsInteractions before deleting the course
+            var interactions = _context.SmsInteractions.Where(si => si.CourseId == id);
+            foreach (var interaction in interactions)
+            {
+                interaction.CourseId = null;
+            }
+
+            await _context.SaveChangesAsync(); // Save changes before deleting course
+
             if (classCourse != null)
             {
                 _context.Courses.Remove(classCourse);
             }
 
             await _context.SaveChangesAsync();
+
+            // Get the current working directory
+            string currentDirectory = Directory.GetCurrentDirectory();
+
+            // Define the path for the "Documents" folder
+            string FolderPath = Path.Combine(currentDirectory, "Documents");
+
+            //Path for course documents
+            string newFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+
+            // Check if the "Documents" folder exists
+            if (Directory.Exists(FolderPath))
+            {
+                // Delete the "newFolder" folder and its contents
+                Directory.Delete(newFolderPath, true);
+            }
+
             return RedirectToAction(nameof(Index));
         }
+
+        // POST: ClassCourses/UploadFile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadFile(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            // Retrieve the course from the database
+            var classCourse = await _context.Courses.FindAsync(id);
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            // Get the current working directory
+            string currentDirectory = Directory.GetCurrentDirectory();
+
+            // Define the path to store the file
+            string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+
+            if (Directory.Exists(courseFolderPath))
+            {
+                // Generate a filename for the file
+                string fileName = Path.GetFileName(file.FileName);
+                string filePath = Path.Combine(courseFolderPath, fileName);
+
+                // Save the file to the disk
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+            }
+
+            return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
+        }
+
 
         private bool ClassCourseExists(int id)
         {

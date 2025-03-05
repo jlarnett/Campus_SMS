@@ -22,9 +22,10 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:7009;http://localhost:502",
+      "applicationUrl": "http://0.0.0.0:7009;http://localhost:502",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "VaultUri": " https://nhasoftwarevault.vault.azure.net/"
       }
     },
     "IIS Express": {

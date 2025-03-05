@@ -1,39 +1,43 @@
-using Xunit;
 using System;
+using System.IO;
 using System.Threading.Tasks;
-
-public class AiServiceTests
+using Xunit;
+using OpenAI.Examples;
+public class AiServiceVectorStoreTests
 {
-    private readonly AiService _aiService;
-
-    public AiServiceTests()
+    private readonly AiServiceVectorStore aiService;
+    public AiServiceVectorStoreTests(AiServiceVectorStore _aiService) 
     {
-        _aiService = new AiService();
+        aiService = _aiService;
     }
 
     [Fact]
-    public async Task GenerateResponseAsync_ShouldReturnResponse()
+    public async Task GenerateResponseAsync_ShouldReturnResponse_WhenCalledWithValidInput()
     {
         // Arrange
-        string studentMessage = "What is an algorithm?";
-        // Purposely wrong material to prove it uses documents to answer questions
-        string syllabusText = "An algorithm like an essay for the mind to solve scientific theories.";
+        string syllabusPath = @"C:\Users\MahoneyPC\Documents\Campus_SMS\Campus_SMS\Documents\CS282-lFQY\"; // Ensure this directory has valid files
+        string phoneNumber = "1234567890"; // Example phone number
+        string studentMessage = "Who is instructor?"; // Example student query
 
-        try
+        // You need to make sure that the OpenAI API key is set correctly in your environment
+        string apiKey = "";
+        if (string.IsNullOrEmpty(apiKey))
         {
-            // Act
-            string response = await _aiService.GenerateResponseAsync(studentMessage, syllabusText);
-
-            // Log output for debugging
-            Console.WriteLine($"AI Response: {response}");
-
-            // Assert
-            Assert.False(string.IsNullOrEmpty(response), "AI response should not be empty.");
+            Assert.Fail("OPENAI_API_KEY environment variable is not set.");
+            return;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Test failed with error: {ex.Message}");
-            throw; // Rethrow so xUnit logs the failure properly
-        }
+
+        // Act
+        string response = await aiService.GenerateResponseAsync(phoneNumber, studentMessage, syllabusPath);
+
+        // Assert
+        Assert.NotNull(response); // Check if the response is not null
+        Assert.NotEmpty(response); // Ensure the response is not empty
+
+        // Optionally, print the response for debugging
+        Console.WriteLine($"AI Response: {response}");
+
+        // Optionally, add more checks depending on the response's content.
+        Assert.Contains("Did that answer all your questions?", response); // Assuming the AI should end with this phrase
     }
 }

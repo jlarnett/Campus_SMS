@@ -20,30 +20,39 @@
                 @Html.DisplayNameFor(model => model.UsiClassIdentifier)
             </th>
             <th>Faculty Members</th>
+            <th>Upload Files</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ClassDescription)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UsiClassIdentifier)
-            </td>
-            <td>
-                @foreach (var faculty in item.AppUsers)
-                {
-                    <p>@faculty</p>
-                }
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ClassDescription)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UsiClassIdentifier)
+                </td>
+                <td>
+                    @foreach (var faculty in item.AppUsers)
+                    {
+                        <p>@faculty</p>
+                    }
+                </td>
+                <td>
+                    <!-- Add file upload form -->
+                    <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data">
+                        <input type="file" name="file" />
+                        <input type="submit" value="Upload" class="btn btn-primary" />
+                    </form>
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
