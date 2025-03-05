@@ -1,56 +1,43 @@
-using Xunit;
 using System;
+using System.IO;
 using System.Threading.Tasks;
-using Campus_SMS.Data;
-using Campus_SMS.Entities;
-using Microsoft.EntityFrameworkCore;
-
-public class AiServiceTests
+using Xunit;
+using OpenAI.Examples;
+public class AiServiceVectorStoreTests
 {
-    private readonly AiService _aiService;
-    private readonly ApplicationDbContext _context;
-
-    public AiServiceTests(AiService aiService)
+    private readonly AiServiceVectorStore aiService;
+    public AiServiceVectorStoreTests(AiServiceVectorStore _aiService) 
     {
-        // Create options for in-memory database
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDb") // Unique DB per test run
-            .Options;
-
-        // Initialize database context
-        _context = new ApplicationDbContext(options);
-
-        // Ensure database is created
-        _context.Database.EnsureCreated();
-
-        // Pass the context to AiService
-        _aiService = aiService;
+        aiService = _aiService;
     }
 
     [Fact]
-    public async Task GenerateResponseAsync_ShouldReturnResponse()
+    public async Task GenerateResponseAsync_ShouldReturnResponse_WhenCalledWithValidInput()
     {
         // Arrange
-        string studentMessage = "What is 1+1?";
-        // Purposly vague info to prove AI is answering based off syllabus text.
-        string syllabusText = "1+1=s(1)+s(1)";
-        string phoneNumber = "8127607508";
+        string syllabusPath = @"C:\Users\MahoneyPC\Documents\Campus_SMS\Campus_SMS\Documents\CS282-lFQY\"; // Ensure this directory has valid files
+        string phoneNumber = "1234567890"; // Example phone number
+        string studentMessage = "Who is instructor?"; // Example student query
 
-        try
+        // You need to make sure that the OpenAI API key is set correctly in your environment
+        string apiKey = "";
+        if (string.IsNullOrEmpty(apiKey))
         {
-            // Act
-            string response = await _aiService.GenerateResponseAsync(phoneNumber, studentMessage, syllabusText);
-
-            // Log output for debugging
-            Console.WriteLine($"AI Response: {response}");
-
-            // Assert
-            Assert.False(string.IsNullOrEmpty(response), "AI response should not be empty.");
+            Assert.Fail("OPENAI_API_KEY environment variable is not set.");
+            return;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Test failed with error: {ex.Message}");
-            throw; // Rethrow so xUnit logs the failure properly
-        }
+
+        // Act
+        string response = await aiService.GenerateResponseAsync(phoneNumber, studentMessage, syllabusPath);
+
+        // Assert
+        Assert.NotNull(response); // Check if the response is not null
+        Assert.NotEmpty(response); // Ensure the response is not empty
+
+        // Optionally, print the response for debugging
+        Console.WriteLine($"AI Response: {response}");
+
+        // Optionally, add more checks depending on the response's content.
+        Assert.Contains("Did that answer all your questions?", response); // Assuming the AI should end with this phrase
     }
 }

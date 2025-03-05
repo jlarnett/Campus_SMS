@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using OpenAI.Examples;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,9 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddScoped<SmsService>();
 
 builder.Services.AddScoped<AiService>();
+
+builder.Services.AddScoped<AiServiceVectorStore>();
+
 
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();

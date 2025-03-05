@@ -7,5 +7,6 @@
         public bool IsFirstTime { get; set; }
         public bool OptStatus { get; set; }
         public string? CurrentCourse { get; set; }
+        public List<string>? EnrolledCourses { get; set; }
     }
 }

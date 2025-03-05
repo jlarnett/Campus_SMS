@@ -1,0 +1,52 @@
+Assignment #3: SQL Queries and Normalization
+Due Date: March 15, 2025
+Total Points: 100
+
+Objective
+This assignment will test your understanding of SQL queries, normalization, and database design principles. You will create a relational database schema, write SQL queries, and normalize a dataset.
+
+Part 1: Database Schema Design (30 points)
+You are tasked with designing a student enrollment system for a university. The database must track students, courses, and enrollments.
+
+1. Design an ERD (Entity-Relationship Diagram) with the following:
+
+Students (StudentID, FirstName, LastName, Email)
+Courses (CourseID, CourseName, Instructor)
+Enrollments (EnrollmentID, StudentID, CourseID, Grade)
+2. Convert your ERD into a relational schema.
+Write the SQL CREATE TABLE statements for each entity.
+
+Part 2: SQL Queries (40 points)
+Using the schema you created, write SQL queries for the following:
+
+Retrieve all students enrolled in "Database Systems"
+Find the average grade for each course
+List students who have not yet received a grade (NULL values)
+Update a student’s email address
+Delete an enrollment record for a student who dropped the course
+Part 3: Database Normalization (30 points)
+The following unnormalized table contains redundant data:
+
+StudentID	StudentName	CourseName	Instructor	Grade
+1001	John Doe	Database Systems	Dr. Smith	A
+1001	John Doe	Data Structures	Prof. Johnson	B
+1002	Jane Smith	Database Systems	Dr. Smith	A-
+1003	Alice Lee	Web Development	Dr. Brown	B+
+1. Convert this table into 3rd Normal Form (3NF).
+
+Identify repeating groups, partial dependencies, and transitive dependencies.
+Break the table into smaller, related tables while maintaining referential integrity.
+Submission Guidelines
+Submit a single .sql file with your schema, queries, and normalized tables.
+Include a PDF or screenshot of your ERD diagram.
+Ensure your SQL scripts execute correctly in MySQL or PostgreSQL.
+Grading Rubric
+Criteria	Points
+Database Schema Design	30
+SQL Query Accuracy	40
+Normalization Process	30
+Total	100
+Bonus (10 points)
+Implement a foreign key constraint to prevent orphaned enrollments.
+Write an SQL JOIN query to display student names along with the courses they are enrolled in.
+Good luck! 🚀
