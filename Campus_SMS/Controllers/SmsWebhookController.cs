@@ -21,11 +21,18 @@ namespace Campus_SMS.Controllers
         [HttpPost("incoming")]
         public async Task<IActionResult> IncomingSms([FromForm] string From, [FromForm] string Body)
         {
-            // Process the incoming message
-            await _smsService.ProcessIncomingMessageAsync(Body, From);
+            try
+            {
+                // Process the incoming message
+                await _smsService.ProcessIncomingMessageAsync(Body, From);
 
-            // Return the TwiML response (Twilio expects this)
-            return Ok();
+                // Return the TwiML response (Twilio expects this)
+                return Ok();
+            }
+            catch (Exception ex) 
+            { 
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

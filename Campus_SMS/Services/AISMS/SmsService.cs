@@ -139,7 +139,7 @@ public class SmsService
                     // Update Current course to ask questions on
                     if (classCourse != null)
                     {
-                        user.CurrentCourse = normalizedMessage;
+                        user.CurrentCourse = classCourse.JoinKey;
                         await _context.SaveChangesAsync();
                     }
                     else if (classKey != null) 
@@ -161,7 +161,7 @@ public class SmsService
                 }
                 else
                 {
-                    classCourse = _context.Courses.FirstOrDefault(c => c.UsiClassIdentifier.ToUpper() == user.CurrentCourse);
+                    classCourse = _context.Courses.FirstOrDefault(c => c.JoinKey.ToUpper() == user.CurrentCourse);
                     if (classCourse == null) 
                     {
                         user.CurrentCourse = null;
@@ -178,8 +178,8 @@ public class SmsService
                         syllabusText = classCourse.CourseDocuments;
 
                         // Proceed with AI response generation
-                        var aiResponseStr = await _aiService.GenerateResponseAsync(phoneNumber, incomingMessage, syllabusText);
                         var course = user.CurrentCourse;
+                        var aiResponseStr = await _aiService.GenerateResponseAsync(phoneNumber, incomingMessage, syllabusText, course);
                         if (aiResponseStr.Trim() == "D1o0N78e")
                         {
                             user.CurrentCourse = null;
@@ -210,13 +210,6 @@ public class SmsService
                             await SendSms(phoneNumber, unassignedMessage);
                         }
                     }
-                }
-                else
-                {
-                    // Once syllabusText is set, proceed with response generation
-                    var aiResponseStr = await _aiService.GenerateResponseAsync(phoneNumber, incomingMessage, syllabusText);
-                    SaveSmsInteraction(phoneNumber, incomingMessage, aiResponseStr, classCourse.Id);
-                    await SendSms(phoneNumber, aiResponseStr);
                 }
             }
             else

@@ -28,7 +28,7 @@ public class AiServiceVectorStoreTests
         }
 
         // Act
-        string response = await aiService.GenerateResponseAsync(phoneNumber, studentMessage, syllabusPath);
+        string response = await aiService.GenerateResponseAsync(phoneNumber, studentMessage, syllabusPath, "");
 
         // Assert
         Assert.NotNull(response); // Check if the response is not null

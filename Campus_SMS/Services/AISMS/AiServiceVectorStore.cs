@@ -4,11 +4,14 @@ using DocumentFormat.OpenXml.Office.SpreadSheetML.Y2023.MsForms;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Graph.Models;
 using OpenAI.Assistants;
+using OpenAI.Chat;
 using OpenAI.Files;
+using OpenAI.VectorStores;
 using System;
 using System.ClientModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,7 +29,7 @@ namespace OpenAI.Examples
             Console.WriteLine($"[DEBUG] API Key Loaded: {(_apiKey.Length > 0 ? "Yes" : "No")}");
         }
 
-        public async Task<string> GenerateResponseAsync(string phoneNumber, string studentMessage, string syllabusPath)
+        public async Task<string> GenerateResponseAsync(string phoneNumber, string studentMessage, string syllabusPath, string courseKey)
         {
 #pragma warning disable OPENAI001
             Console.WriteLine("[DEBUG] Starting GenerateResponseAsync...");
@@ -70,7 +73,7 @@ namespace OpenAI.Examples
                 }
                 else
                 {
-                    Console.WriteLine($"[DEBUG] File already exists: {fileName}. Retrieving existing file ID.");
+                    Console.WriteLine($"[DEBUG] File already exists in database: {fileName}. Retrieving existing file ID.");
                     var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName);
                     if (existingDoc != null)
                     {
@@ -90,7 +93,8 @@ namespace OpenAI.Examples
                 Console.WriteLine($"[DEBUG] File ID: {id}");
             }
 
-            var existingAssistant = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == "PersistentAssistant");
+            var course = _context.Courses.FirstOrDefault(c => c.JoinKey == courseKey);
+            var existingAssistant = course.AssistentId;
             var assistentId = "";
             if (existingAssistant != null)
             {
@@ -98,18 +102,20 @@ namespace OpenAI.Examples
                 {
                     Console.WriteLine("[DEBUG] New files detected. Recreating assistant...");
                     // Optionally delete the old assistant if desired:
-                    await assistantClient.DeleteAssistantAsync(existingAssistant.DocumentID);
+                    await assistantClient.DeleteAssistantAsync(course.AssistentId);
 
                     // Create or reuse the assistant without deleting it afterward.
                     AssistantCreationOptions assistantOptions = new()
                     {
-                        Name = "Teachers Assistant",
+                        Name = course.UsiClassIdentifier + " Teachers Assistant",
                         Instructions = "You are a helpful assistant who answers student questions based on course documents that have been " +
                                        "uploaded by the professor. After providing each answer, end with 'Did that answer all your questions?' " +
                                        "If the student replies affirmatively (for example, by saying 'yes', 'yep', 'done' or similar), " +
                                        "then in your next message respond with exactly 'D1o0N78e' and nothing else. " +
+                                       "If the student replies negatively, instruct them to email their professor." +
                                        "Otherwise, continue answering further questions. Please keep your responses under 1600 characters." +
-                                       "Do NOT include citations unless explicitly asked.",
+                                       "Do not include source citation.",
+
                         Tools =
                         {
                             new FileSearchToolDefinition(),
@@ -131,26 +137,21 @@ namespace OpenAI.Examples
                     Console.WriteLine($"[DEBUG] Assistant Name: {assistantOptions.Name}");
                     Console.WriteLine($"[DEBUG] Vector Store File IDs: {string.Join(", ", fileIds)}");
 
-                    _context.OpenAIUploadedDocs.Remove(existingAssistant);
+                    course.AssistentId = null;
                     await _context.SaveChangesAsync();
 
                     // recreate
-                    Assistant assistant = assistantClient.CreateAssistant("gpt-3.5-turbo", assistantOptions);
+                    Assistant assistant = assistantClient.CreateAssistant("gpt-4o-mini", assistantOptions);
                     Console.WriteLine($"[DEBUG] Assistant Created. ID: {assistant.Id}");
-                    var assistent = new OpenAIUploadedDocs
-                    {
-                        DocumentName = "PersistentAssistant",  // store only file name
-                        DocumentID = assistant.Id
-                    };
-                    _context.OpenAIUploadedDocs.Add(assistent);
+                    course.AssistentId = assistant.Id;
                     await _context.SaveChangesAsync();
                     Console.WriteLine($"[DEBUG] Stored assistent in DB with ID: {assistant.Id}");
                     assistentId = assistant.Id;
                 }
                 else
                 {
-                    Console.WriteLine("[DEBUG] Assistent already exists and requires no update: " + existingAssistant.DocumentID);
-                    assistentId = existingAssistant.DocumentID;
+                    Console.WriteLine("[DEBUG] Assistent already exists and requires no update: " + course.AssistentId);
+                    assistentId = course.AssistentId;
                 }
                 
             }
@@ -159,13 +160,14 @@ namespace OpenAI.Examples
                 // Create or reuse the assistant without deleting it afterward.
                 AssistantCreationOptions assistantOptions = new()
                 {
-                    Name = "Teachers Assistant",
+                    Name = course.UsiClassIdentifier + " Teachers Assistant",
                     Instructions = "You are a helpful assistant who answers student questions based on course documents that have been " +
-                                   "uploaded by the professor. After providing each answer, end with 'Did that answer all your questions?' " +
-                                   "If the student replies affirmatively (for example, by saying 'yes', 'yep', 'done' or similar), " +
-                                   "then in your next message respond with exactly 'D1o0N78e' and nothing else. " +
-                                   "Otherwise, continue answering further questions. Please keep your responses under 1600 characters. "+
-                                   "Do NOT include citations unless explicitly asked.",
+                                       "uploaded by the professor. After providing each answer, end with 'Did that answer all your questions?' " +
+                                       "If the student replies affirmatively (for example, by saying 'yes', 'yep', 'done' or similar), " +
+                                       "then in your next message respond with exactly 'D1o0N78e' and nothing else. " +
+                                       "If the student replies negatively, instruct them to email their professor." +
+                                       "Otherwise, continue answering further questions. Please keep your responses under 1600 characters." +
+                                       "Do not include source citation.",
                     Tools =
                 {
                     new FileSearchToolDefinition(),
@@ -176,9 +178,9 @@ namespace OpenAI.Examples
                         FileSearch = new()
                         {
                             NewVectorStores =
-                        {
-                            new VectorStoreCreationHelper(fileIds),
-                        }
+                            {
+                                new VectorStoreCreationHelper(fileIds)
+                            }
                         }
                     },
                 };
@@ -188,24 +190,35 @@ namespace OpenAI.Examples
                 Console.WriteLine($"[DEBUG] Vector Store File IDs: {string.Join(", ", fileIds)}");
 
                 // IMPORTANT: Create the assistant once and reuse it in future queries if possible.
-                Assistant assistant = assistantClient.CreateAssistant("gpt-3.5-turbo", assistantOptions);
+                Assistant assistant = assistantClient.CreateAssistant("gpt-4o-mini", assistantOptions);
                 Console.WriteLine($"[DEBUG] Assistant Created. ID: {assistant.Id}");
-                var assistent = new OpenAIUploadedDocs
-                {
-                    DocumentName = "PersistentAssistant",  // store only file name
-                    DocumentID = assistant.Id
-                };
-                _context.OpenAIUploadedDocs.Add(assistent);
+                course.AssistentId = assistant.Id;
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"[DEBUG] Stored assistent in DB with ID: {assistant.Id}");
                 assistentId = assistant.Id;
             }
 
+            // Fetch messages from this number to maintain history
+            var chatHistory = _context.SmsInteractions
+                .Where(s => s.PhoneNumber == phoneNumber)
+                .OrderByDescending(s => s.TimeReceived)
+                .Take(5) //Limit history
+                .ToList();
+
             // Create a thread with the student's message and wait for the response.
             Console.WriteLine($"[DEBUG] Creating thread with student's message: {studentMessage}");
+
+            // Add previous messages to context
+            var messagesHistory = "";
+            foreach (var interaction in chatHistory.OrderBy(s => s.TimeReceived))
+            {
+                messagesHistory += "Role: User, Message: " + interaction.IncomingSmsMessage+";";
+                messagesHistory += "Role: System, Message: " + interaction.AiSmsResponse+";";
+            }
+
             ThreadCreationOptions threadOptions = new()
             {
-                InitialMessages = { studentMessage }
+                InitialMessages = { messagesHistory + "Role: User, Message: " + studentMessage+ " Use documents provided.;" },
             };
 
             ThreadRun threadRun = await assistantClient.CreateThreadAndRunAsync(assistentId, threadOptions);
@@ -253,9 +266,10 @@ namespace OpenAI.Examples
             // Note: We are NOT deleting the assistant or the files.
             Console.WriteLine("[DEBUG] Cleanup complete.");
 
-            // Ensure the response is within 1600 characters.
+            // Ensure the response is within 1600 characters and removes citation.
             Console.WriteLine($"[DEBUG] Final response length before truncation: {response.Length} characters.");
-            response = response.Length > 1600 ? response.Substring(0, 1600) : response;
+            response = response.Length > 1600 ? response.Substring(0, 1599) : response;
+            response = Regex.Replace(response, "【.*?】", "");
             Console.WriteLine("[DEBUG] Final response generated.");
             Console.WriteLine($"[DEBUG] Response:\n{response}");
 
