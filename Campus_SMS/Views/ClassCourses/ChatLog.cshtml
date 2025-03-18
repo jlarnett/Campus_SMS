@@ -1,0 +1,56 @@
+﻿@model Campus_SMS.Views.ClassCourses.Vms.ChatLogVm
+
+@{
+    ViewData["Title"] = $"{Model.Class.UsiClassIdentifier} Chat Log";
+}
+
+<h1 class="text-center">@Model.Class.UsiClassIdentifier Sms Chat Log</h1>
+
+<div class="col border border-white rounded-2 shadow-lg p-2">
+    <table class="display" id="ChatLogTable">
+        <thead>
+            <tr>
+                <th>
+                    Phone Number
+                </th>
+                <th>
+                    Sms Message Received
+                </th>
+                <th>
+                    AI Response
+                </th>
+                <th>
+                    Transaction Date
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+        @{
+            foreach (var item in Model.Log)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.PhoneNumber)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.IncomingSmsMessage)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.AiSmsResponse)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TimeReceived)
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/ChatLogTableInitialize.js"></script>
+}
