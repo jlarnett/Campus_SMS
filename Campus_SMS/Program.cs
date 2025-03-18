@@ -33,49 +33,58 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddScoped<SmsService>();
 
 builder.Services.AddScoped<AiService>();
-
 builder.Services.AddScoped<AiServiceVectorStore>();
 
 
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddAuthentication(options =>
+if (builder.Environment.IsProduction())
 {
-    //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-})
-.AddCookie()
-.AddOpenIdConnect("Auth0", options =>
-{
-    options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
-    options.ClientId = builder.Configuration["Auth0:ClientId"];
-    options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
-    options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
-
-    options.ResponseType = "code";
-    options.SaveTokens = true;
-    options.Scope.Add("openid");
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
-
-    options.Events = new OpenIdConnectEvents
-    {
-        OnRedirectToIdentityProviderForSignOut = (context) =>
+    builder.Services.AddAuthentication(options =>
         {
-            var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
-            context.Response.Redirect(logoutUri);
-            context.HandleResponse();
-            return Task.CompletedTask;
-        }
-    };
-});
+            //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        })
+        .AddCookie()
+        .AddOpenIdConnect("Auth0", options =>
+        {
+            options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
+            options.ClientId = builder.Configuration["Auth0:ClientId"];
+            options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+            options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
+
+            options.ResponseType = "code";
+            options.SaveTokens = true;
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+
+            options.Events = new OpenIdConnectEvents
+            {
+                OnRedirectToIdentityProviderForSignOut = (context) =>
+                {
+                    var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
+                    context.Response.Redirect(logoutUri);
+                    context.HandleResponse();
+                    return Task.CompletedTask;
+                }
+            };
+        });
+}
 
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+//Automatically Apply DB migrations
+using var scope = app.Services.CreateScope();
+using var appContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+//Apply DB migrations
+appContext.Database.Migrate();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
