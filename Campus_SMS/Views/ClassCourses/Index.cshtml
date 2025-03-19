@@ -10,8 +10,10 @@
 <p class="d-grid gap-2">
     <a asp-action="Create" class="btn btn-outline-primary">Add Class</a>
 </p>
-<table class="table table-striped border border-primary">
-    <thead>
+
+<div class="col border border-white p-2 rounded-2 shadow">
+    <table class="display" id="CourseTable">
+        <thead>
         <tr>
             <th>
                 @Html.DisplayNameFor(model => model.ClassDescription)
@@ -23,8 +25,8 @@
             <th>Upload Files</th>
             <th></th>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         @foreach (var item in Model)
         {
             <tr>
@@ -50,9 +52,18 @@
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                     <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
+                    <a asp-action="ChatLog" asp-route-id="@item.Id">Chat Log</a>
+
                 </td>
             </tr>
         }
-    </tbody>
-</table>
+        </tbody>
+    </table>
+
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/ClassTableInitialize.js"></script>
+}

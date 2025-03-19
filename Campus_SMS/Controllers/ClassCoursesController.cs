@@ -9,6 +9,7 @@ using Campus_SMS.Data;
 using Campus_SMS.Dto;
 using Campus_SMS.Entities;
 using Campus_SMS.Entities.User;
+using Campus_SMS.Views.ClassCourses.Vms;
 using Microsoft.AspNetCore.Identity;
 
 namespace Campus_SMS.Controllers
@@ -58,6 +59,30 @@ namespace Campus_SMS.Controllers
             }
 
             return View(classCourse);
+        }
+
+        // GET: ClassCourses/ChatLog/5
+        public async Task<IActionResult> ChatLog(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var classCourse = await _context.Courses
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            var smsInteractions =
+                await _context.SmsInteractions
+                    .Where(c => c.CourseId.Equals(classCourse.Id))
+                    .ToListAsync();
+
+            return View(new ChatLogVm() {Class = classCourse, Log = smsInteractions});
         }
 
         // GET: ClassCourses/Create
