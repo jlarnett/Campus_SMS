@@ -7,16 +7,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Campus_SMS.Data;
 using Campus_SMS.Entities;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Campus_SMS.Controllers
 {
     public class AnnouncementsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly SmsService _smsService;
 
-        public AnnouncementsController(ApplicationDbContext context)
+        public AnnouncementsController(ApplicationDbContext context, SmsService smsService)
         {
             _context = context;
+            _smsService = smsService;
         }
 
         // GET: Announcements
@@ -62,7 +65,33 @@ namespace Campus_SMS.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(announcement);
-                await _context.SaveChangesAsync();
+                var numChanges = await _context.SaveChangesAsync();
+
+                if (numChanges < 1)
+                {
+                    return Problem();
+                }
+
+                //Logic to send announcement to everyone in class
+                var course = await _context.Courses.FindAsync(announcement.CourseId);
+                List<SMSUser> affectedUsers = new List<SMSUser>();
+
+                if (course is { JoinKey: not null })
+                {
+                    affectedUsers = await _context.SmsUsers.Where(c => c.EnrolledCourses != null && c.EnrolledCourses.Contains(course.JoinKey))
+                        .ToListAsync();
+
+                    foreach (var user in affectedUsers)
+                    {
+                        await _smsService.SendSms(user.PhoneNumber, announcement.OutboundMessage);
+                    }
+                }
+                else
+                {
+                    return NotFound();
+                }
+
+
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", announcement.CourseId);

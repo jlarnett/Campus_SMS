@@ -21,7 +21,7 @@ namespace Campus_SMS.Entities
         // New property to store course documents (as file paths or URLs)
         public string? CourseDocuments { get; set; }
         //Unique key for joining a class's SmS service.
-        public string? JoinKey { get; set; }
+        public string? JoinKey { get; set; } = string.Empty;
 
         public string? AssistentId { get; set; }    
     }
