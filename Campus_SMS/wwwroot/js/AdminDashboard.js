@@ -57,7 +57,7 @@ new Chart(ctx3, {
 });
 
 new Chart(ctx4, {
-    type: 'bar',
+    type: 'line',
     data: {
     labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
     datasets: [{
