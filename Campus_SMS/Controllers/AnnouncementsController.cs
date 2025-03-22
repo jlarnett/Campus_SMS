@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Campus_SMS.Data;
 using Campus_SMS.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Campus_SMS.Controllers
@@ -23,6 +24,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: Announcements
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Announcements.Include(a => a.Course);
@@ -30,6 +32,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: Announcements/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -49,6 +52,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: Announcements/Create
+        [Authorize]
         public IActionResult Create()
         {
             ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "UsiClassIdentifier");
@@ -59,6 +63,7 @@ namespace Campus_SMS.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,OutboundMessage,CourseId")] Announcement announcement)
         {
@@ -99,6 +104,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: Announcements/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -119,6 +125,7 @@ namespace Campus_SMS.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,OutboundMessage,CourseId")] Announcement announcement)
         {
@@ -171,6 +178,7 @@ namespace Campus_SMS.Controllers
         }
 
         // POST: Announcements/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
