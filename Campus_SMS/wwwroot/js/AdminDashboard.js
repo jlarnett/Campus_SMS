@@ -58,7 +58,7 @@ new Chart(ctx2, {
     data: {
     labels: keys,
     datasets: [{
-        label: '# of Votes',
+        label: '# of escalations per course',
         data: escalationCount,
     }]
     },
