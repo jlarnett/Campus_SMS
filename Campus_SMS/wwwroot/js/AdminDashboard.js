@@ -12,13 +12,39 @@ var barColors = [
 
 ];
 
+var keys = [];
+var smsCount = [];
+
+var escalationCount = [];
+
+//get list of Keys the user has access too
+for (var key in courseSmsCountLookup) {
+    if (courseSmsCountLookup.hasOwnProperty(key)) {
+        keys.push(key);
+    }
+}
+
+//get # of SMS per course
+for (var key in courseSmsCountLookup) {
+    if (courseSmsCountLookup.hasOwnProperty(key)) {
+        smsCount.push(courseSmsCountLookup[key]);
+    }
+}
+
+//Get # of escalation per course
+for (var key in courseEscalationCountLookup) {
+    if (courseEscalationCountLookup.hasOwnProperty(key)) {
+        escalationCount.push(courseEscalationCountLookup[key]);
+    }
+}
+
 new Chart(ctx, {
     type: 'bar',
     data: {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+    labels: keys,
     datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
+        label: '# of messages per Course',
+        data: smsCount,
         borderWidth: 1
     }]
     },
@@ -30,10 +56,10 @@ new Chart(ctx, {
 new Chart(ctx2, {
     type: 'pie',
     data: {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+    labels: keys,
     datasets: [{
         label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
+        data: escalationCount,
     }]
     },
     options: {
