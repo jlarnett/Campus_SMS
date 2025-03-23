@@ -10,6 +10,7 @@ using Campus_SMS.Dto;
 using Campus_SMS.Entities;
 using Campus_SMS.Entities.User;
 using Campus_SMS.Views.ClassCourses.Vms;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace Campus_SMS.Controllers
@@ -27,6 +28,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var courses = await _context.Courses.ToListAsync();
@@ -44,6 +46,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -62,6 +65,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses/ChatLog/5
+        [Authorize]
         public async Task<IActionResult> ChatLog(int? id)
         {
             if (id == null)
@@ -86,6 +90,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses/Create
+        [Authorize]
         public IActionResult Create()
         {
             List<AppUserCheckboxViewModel> userCheckboxVm = new List<AppUserCheckboxViewModel>();
@@ -133,6 +138,7 @@ namespace Campus_SMS.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds")] ClassCourseDto classCourseDto)
         {
@@ -191,6 +197,7 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -234,6 +241,7 @@ namespace Campus_SMS.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,ClassDescription,UsiClassIdentifier,AppUserIds,CourseDocuments,JoinKey")] ClassCourseDto classCourseDto)
         {
@@ -307,6 +315,8 @@ namespace Campus_SMS.Controllers
         }
 
         // GET: ClassCourses/Delete/5
+
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -325,6 +335,7 @@ namespace Campus_SMS.Controllers
         }
 
         // POST: ClassCourses/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
