@@ -1,9 +1,5 @@
 {
   "dependencies": {
-    "mssql1": {
-      "type": "mssql",
-      "connectionId": "ConnectionStrings:DefaultConnection"
-    },
     "secrets1": {
       "type": "secrets",
       "connectionId": "VaultUri"
@@ -20,6 +16,10 @@
       "type": "secrets",
       "connectionId": "VaultUri1",
       "dynamicId": null
+    },
+    "mssql4": {
+      "type": "mssql",
+      "connectionId": "ConnectionStrings:DatabaseConnection2"
     }
   }
 }

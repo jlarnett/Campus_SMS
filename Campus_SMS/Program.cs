@@ -13,7 +13,11 @@ using OpenAI.Examples;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
 
 if (builder.Environment.IsProduction())
 {
@@ -27,15 +31,13 @@ if (builder.Environment.IsProduction())
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+    options.UseSqlServer(connectionString, sqlOptions =>
+        sqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<SmsService>();
 
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiServiceVectorStore>();
-
-
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -84,7 +86,7 @@ using var scope = app.Services.CreateScope();
 using var appContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 //Apply DB migrations
-appContext.Database.Migrate();
+ appContext.Database.Migrate();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

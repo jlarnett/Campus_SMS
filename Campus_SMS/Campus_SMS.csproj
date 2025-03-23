@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-Campus_SMS-67bd5eb6-399e-4e26-b67c-5a37b21c7b10</UserSecretsId>
+    <RepositoryUrl>https://github.com/jlarnett/Campus_SMS.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
