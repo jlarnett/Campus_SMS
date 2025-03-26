@@ -46,7 +46,12 @@ if (builder.Environment.IsProduction())
             //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
         })
-        .AddCookie()
+        .AddCookie(options =>
+        {
+            options.LoginPath = "/login";
+            options.LogoutPath = "/logout";
+
+        })
         .AddOpenIdConnect("Auth0", options =>
         {
             options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
@@ -108,6 +113,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
 app.Run();
