@@ -9,6 +9,14 @@ namespace Campus_SMS.Controllers
             return View();
 
         }
+        public IActionResult ManageStudents()
+        {
+            return View();
+        }
+        public IActionResult ManageFaculty()
+        {
+            return View();
+        }
         public IActionResult ManageCourses()
         {
             return View();
