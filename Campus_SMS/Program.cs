@@ -48,9 +48,9 @@ if (builder.Environment.IsProduction())
         })
         .AddCookie(options =>
         {
-            options.LoginPath = "/login";
-            options.LogoutPath = "/logout";
-
+            options.LoginPath = "/Identity/Account/Login";
+            options.LogoutPath = "/Identity/Account/Logout";
+            options.AccessDeniedPath = "/Identity/Account/AccessDenied";
         })
         .AddOpenIdConnect("Auth0", options =>
         {
