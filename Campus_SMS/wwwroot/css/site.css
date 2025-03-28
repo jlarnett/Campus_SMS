@@ -1,26 +1,146 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* Button styling to match USI theme */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 10px 20px;
+    font-size: 15px;
 }
 
+.btn-primary {
+    background-color: #003366 !important;
+    border-color: #003366 !important;
+    color: white !important;
+}
+
+    .btn-primary:hover {
+        background-color: #002244 !important;
+        border-color: #002244 !important;
+    }
+
+.btn-secondary {
+    background-color: #777777 !important;
+    border-color: #777777 !important;
+    color: white !important;
+}
+
+    .btn-secondary:hover {
+        background-color: #555555 !important;
+        border-color: #555555 !important;
+    }
+
+.btn-info {
+    background-color: #003366 !important;
+    border-color: #003366 !important;
+    color: white !important;
+}
+
+    .btn-info:hover {
+        background-color: #002244 !important;
+        border-color: #002244 !important;
+    }
+
+/* Global page layout improvements */
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+    background-color: #f5f8fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333333;
+    font-size: 16px;
 }
 
 label {
-    padding: 0 0 0 10px;
+    padding: 0 0 10px;
+}
+
+/* Navbar customization - USI Dark Blue */
+.navbar {
+    background-color: #003366 !important;
+    color: white !important;
+}
+
+    .navbar .nav-link,
+    .navbar .navbar-brand {
+        color: #ffffff !important;
+    }
+
+        .navbar .nav-link:hover,
+        .navbar .navbar-brand:hover {
+            color: #cccccc !important;
+        }
+
+/* Footer customization - match navbar */
+footer {
+    background-color: #003366;
+    color: #ffffff;
+    padding: 10px 0;
+    margin-top: 40px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Table styling improvements */
+.table {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .table thead {
+        background-color: #003366;
+        color: white;
+    }
+
+        .table thead th {
+            border-bottom: none;
+        }
+
+    .table tbody td {
+        vertical-align: middle;
+    }
+
+/* Typography and link styles */
+h1, h2, h3 {
+    font-weight: 600;
+    color: #003366;
+}
+
+a {
+    color: #003366;
+    text-decoration: none;
+}
+
+    a:hover {
+        color: #002244;
+        text-decoration: underline;
+    }
+
+/* Form input improvements */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #cccccc;
+    padding: 8px 12px;
+}
+
+    .form-control:focus {
+        border-color: #003366;
+        box-shadow: 0 0 5px rgba(0, 51, 102, 0.4);
+    }
+.navbar-nav .nav-link {
+    font-weight: normal !important;
+    padding-top: 8px !important; /* Adjust this as needed for perfect vertical alignment */
 }
