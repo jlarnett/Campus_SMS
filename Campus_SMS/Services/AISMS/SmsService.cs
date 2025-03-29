@@ -17,7 +17,7 @@ public class SmsService
     private readonly ILogger _logger;
 
 
-    public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService, ILogger logger)
+    public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService, ILogger<SmsService> logger)
     {
         _accountSid = configuration.GetValue<string>("Twilio:AccountSID") ?? string.Empty;
         _authToken = configuration.GetValue<string>("Twilio:AuthToken") ?? string.Empty;
