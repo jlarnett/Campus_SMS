@@ -14,13 +14,17 @@ public class SmsService
     private readonly string _fromPhoneNumber;
     private readonly ApplicationDbContext _context;
     private readonly AiServiceVectorStore _aiService;
+    private readonly ILogger _logger;
 
-    public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService)
+
+    public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService, ILogger logger)
     {
         _accountSid = configuration.GetValue<string>("Twilio:AccountSID") ?? string.Empty;
         _authToken = configuration.GetValue<string>("Twilio:AuthToken") ?? string.Empty;
         _fromPhoneNumber = configuration.GetValue<string>("Twilio:FromPhoneNumber") ?? string.Empty;
-
+        _logger = logger;
+        
+        _logger.LogInformation($"Initializing sms service. Initial sid = {_accountSid}, auth token = {_authToken}, fromPhoneNumber = {_fromPhoneNumber}");
         _context = context;
         _aiService = aiService;
         TwilioClient.Init(_accountSid, _authToken);

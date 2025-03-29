@@ -35,9 +35,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         sqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<SmsService>();
-
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiServiceVectorStore>();
+
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -45,8 +45,9 @@ if (builder.Environment.IsProduction())
 {
     builder.Services.AddAuthentication(options =>
         {
-            //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Set DefaultAuthenticateScheme
             options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Set DefaultScheme
         })
         .AddCookie(options =>
         {
