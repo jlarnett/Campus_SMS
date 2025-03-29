@@ -17,7 +17,7 @@ public class AiService
     public AiService(ApplicationDbContext context, IConfiguration configuration)
     {
         _context = context;
-        _apiKey = configuration.GetValue<string>("OpenAI:RobertAPIKey") ?? string.Empty;
+        _apiKey = configuration["OpenAI:RobertAPIKey"] ?? string.Empty;
     }
 
     public async Task<string> GenerateResponseAsync(string phoneNumber, string studentMessage, string syllabusPath)

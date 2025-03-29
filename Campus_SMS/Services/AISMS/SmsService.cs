@@ -19,9 +19,9 @@ public class SmsService
 
     public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService, ILogger<SmsService> logger)
     {
-        _accountSid = configuration.GetValue<string>("Twilio:AccountSID") ?? string.Empty;
-        _authToken = configuration.GetValue<string>("Twilio:AuthToken") ?? string.Empty;
-        _fromPhoneNumber = configuration.GetValue<string>("Twilio:FromPhoneNumber") ?? string.Empty;
+        _accountSid = configuration["Twilio:AccountSID"] ?? string.Empty;
+        _authToken = configuration["Twilio:AuthToken"] ?? string.Empty;
+        _fromPhoneNumber = configuration["Twilio:FromPhoneNumber"] ?? string.Empty;
         _logger = logger;
         
         _logger.LogInformation($"Initializing sms service. Initial sid = {_accountSid}, auth token = {_authToken}, fromPhoneNumber = {_fromPhoneNumber}");
