@@ -34,6 +34,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
         sqlOptions.EnableRetryOnFailure()));
 
+//Inject the configuration into dependency injection -> Used by SmsService and other services
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
 builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiServiceVectorStore>();

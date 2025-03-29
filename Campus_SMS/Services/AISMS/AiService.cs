@@ -14,7 +14,6 @@ public class AiService
     private readonly string _apiKey;
     private readonly ApplicationDbContext _context;
 
-
     public AiService(ApplicationDbContext context, IConfiguration configuration)
     {
         _context = context;
