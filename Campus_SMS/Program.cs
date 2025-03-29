@@ -34,12 +34,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
         sqlOptions.EnableRetryOnFailure()));
 
-//Inject the configuration into dependency injection -> Used by SmsService and other services
-builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+logger.LogTrace($"Checcking builder configuration from program.cs file " +
+                $"API Key - {builder.Configuration["OpenAI:RobertAPIKey"]}" +
+                $"Account SID - {builder.Configuration["Twilio:AccountSID"]}" +
+                $"Auth Token - {builder.Configuration["Twilio:AuthToken"]}" +
+                $"From Number - {builder.Configuration["Twilio:FromPhoneNumber"]}");
 
-builder.Services.AddScoped<SmsService>();
-builder.Services.AddScoped<AiService>();
-builder.Services.AddScoped<AiServiceVectorStore>();
+//Inject the configuration into dependency injection -> Used by SmsService and other services
+builder.Services.AddSingleton(builder.Configuration);
+
+builder.Services.AddTransient<SmsService>();
+builder.Services.AddTransient<AiService>();
+builder.Services.AddTransient<AiServiceVectorStore>();
 
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
