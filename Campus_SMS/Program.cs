@@ -55,9 +55,9 @@ if (builder.Environment.IsProduction())
 {
     builder.Services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Set DefaultAuthenticateScheme
+            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Added this for handling login
             options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Set DefaultScheme
         })
         .AddCookie(options =>
         {
