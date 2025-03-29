@@ -11,10 +11,12 @@ namespace Campus_SMS.Controllers
     public class SmsWebhookController : ControllerBase
     {
         private readonly SmsService _smsService;
+        private readonly ILogger _logger;
 
-        public SmsWebhookController(SmsService smsService)
+        public SmsWebhookController(SmsService smsService, ILogger<SmsWebhookController> logger)
         {
             _smsService = smsService;
+            _logger = logger;
         }
 
         // Endpoint to handle incoming SMS messages
@@ -30,7 +32,8 @@ namespace Campus_SMS.Controllers
                 return Ok();
             }
             catch (Exception ex) 
-            { 
+            {
+                _logger.LogError(ex.Message);
                 return BadRequest(ex.Message);
             }
         }
