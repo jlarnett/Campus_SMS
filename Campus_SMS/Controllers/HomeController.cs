@@ -14,32 +14,44 @@ namespace Campus_SMS.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<AppUser> userManager)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, 
+            UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _logger = logger;
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        [Authorize]
         public async Task<IActionResult> Index()
         {
-            var courses = await _context.ClassProfessorMappings.Where(c => c.AppUserId.Equals(_userManager.GetUserId(User))).Include(c => c.Class).ToListAsync();
-            Dictionary<string, int> courseSmsCount = [];
-            Dictionary<string, int> courseEscalationCount = [];
+            DashboardVm vm;
 
-            foreach (var course in courses)
+            if (_signInManager.IsSignedIn(User))
             {
-                var count = await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId)).CountAsync();
-                var escalationCount =
-                    await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId) && s.IncomingSmsMessage.Contains("escalate")).CountAsync();
-                courseSmsCount.Add(course.Class.UsiClassIdentifier, count);
-                courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
+                var courses = await _context.ClassProfessorMappings.Where(c => c.AppUserId.Equals(_userManager.GetUserId(User))).Include(c => c.Class).ToListAsync();
+                Dictionary<string, int> courseSmsCount = [];
+                Dictionary<string, int> courseEscalationCount = [];
+
+                foreach (var course in courses)
+                {
+                    var count = await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId)).CountAsync();
+                    var escalationCount =
+                        await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId) && s.IncomingSmsMessage.Contains("escalate")).CountAsync();
+                    courseSmsCount.Add(course.Class.UsiClassIdentifier, count);
+                    courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
+                }
+
+                vm = new DashboardVm(courseSmsCount, courseEscalationCount);
+            }
+            else
+            {
+                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>());
             }
 
-            DashboardVm vm = new DashboardVm(courseSmsCount, courseEscalationCount);
             return View(vm);
         }
 
