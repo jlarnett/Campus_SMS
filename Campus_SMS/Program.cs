@@ -51,46 +51,36 @@ builder.Services.AddTransient<AiServiceVectorStore>();
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-if (builder.Environment.IsProduction())
-{
-    builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-        })
-        .AddCookie(options =>
-        {
-            options.LoginPath = "/Identity/Account/Login";
-            options.LogoutPath = "/Identity/Account/Logout";
-            options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-        })
-        .AddOpenIdConnect("Auth0", options =>
-        {
-            options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
-            options.ClientId = builder.Configuration["Auth0:ClientId"];
-            options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
-            options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
+builder.Services.AddAuthentication(options =>
+    {
+        //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        //options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        //options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddOpenIdConnect("Auth0", options =>
+    {
+        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
+        options.ClientId = builder.Configuration["Auth0:ClientId"];
+        options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+        options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
+    
+        options.ResponseType = "code";
+        options.SaveTokens = true;
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
 
-            options.ResponseType = "code";
-            options.SaveTokens = true;
-            options.Scope.Add("openid");
-            options.Scope.Add("profile");
-            options.Scope.Add("email");
-
-            options.Events = new OpenIdConnectEvents
+        options.Events = new OpenIdConnectEvents
+        {
+            OnRedirectToIdentityProviderForSignOut = (context) =>
             {
-                OnRedirectToIdentityProviderForSignOut = (context) =>
-                {
-                    var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
-                    context.Response.Redirect(logoutUri);
-                    context.HandleResponse();
-                    return Task.CompletedTask;
-                }
-            };
-        });
-}
+                var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
+                context.Response.Redirect(logoutUri);
+                context.HandleResponse();
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddAuthorization();
 

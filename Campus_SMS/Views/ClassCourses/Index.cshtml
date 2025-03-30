@@ -5,64 +5,121 @@
     ViewData["Title"] = "Index";
 }
 
+<style>
+    /* Initially hide the "down" chevron */
+    .toggle-btn svg.chevron-down {
+        display: none;
+    }
+
+    /* When expanded, swap the icons */
+    .toggle-btn[aria-expanded="true"] svg.chevron-up {
+        display: none;
+    }
+
+    .toggle-btn[aria-expanded="true"] svg.chevron-down {
+        display: inline;
+    }
+
+    /* Ensure collapse content is initially hidden and smoothly transition */
+    .collapse tr{
+        height: 0;
+        overflow: hidden;
+        transition: height 0.5s ease; /* Smooth transition on height */
+    }
+
+    /* When collapsed, allow content to expand smoothly */
+    .collapse.show tr{
+        height: auto;
+        transition: height 0.5s ease; /* Smooth transition on height */
+    }
+
+    tr:hover {
+        filter: brightness(1.4); /* Increases brightness by 20% */
+        transition: filter 0.3s ease-in-out; /* Smooth transition */
+    }
+
+
+</style>
+
 <h1 class="text-center">My Classes</h1>
 
 <p class="d-grid gap-2">
     <a asp-action="Create" class="btn btn-outline-primary">Add Class</a>
 </p>
 
-<div class="col border border-white p-2 rounded-2 shadow">
-    <table class="display" id="CourseTable">
-        <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ClassDescription)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UsiClassIdentifier)
-            </th>
-            <th>Faculty Members</th>
-            <th>Upload Files</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ClassDescription)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.UsiClassIdentifier)
-                </td>
-                <td>
-                    @foreach (var faculty in item.AppUsers)
+<div class="col border border-white p-2 rounded-2 shadow container shadow min-vh-100 py-2">
+        <div class="table-responsive">
+            <table class="table accordion display table-striped" id="CourseTable">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">@Html.DisplayNameFor(model => model.ClassDescription)</th>
+                        <th scope="col">@Html.DisplayNameFor(model => model.UsiClassIdentifier)</th>
+                        <th scope="col">Upload Files</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    @foreach (var item in Model)
                     {
-                        <p>@faculty</p>
+                        var uniqueIdentifier = Guid.NewGuid();
+                        <tr data-bs-toggle="collapse" data-bs-target="#hidden-row-@uniqueIdentifier">
+                            <th scope="row">
+                                <button class="btn toggle-btn" data-bs-toggle="collapse" data-bs-target="#hidden-row-@uniqueIdentifier" aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi chevron-up" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z" />
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi chevron-down" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708" />
+                                    </svg>
+                                </button>
+                            </th>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ClassDescription)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.UsiClassIdentifier)
+                            </td>
+                            <td>
+                                <!-- Add file upload form -->
+                                <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data">
+                                    <input type="file" name="file" />
+                                    <input type="submit" value="Upload" class="btn btn-primary" />
+                                </form>
+                            </td>
+                            <td>
+                                <div class="action-links ">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary"><span>Edit</span></a> |
+                                <a asp-action="Details" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary"><span>Details</span></a> |
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="no-collapse btn btn-outline-danger"><span>Delete</span></a> |
+                                <a asp-action="ChatLog" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary"><span>Chat Log</span></a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="collapse accordion-collapse rounded-3 border border-2 shadow-lg hidden-row ps-3 pe-3" id="hidden-row-@uniqueIdentifier">
+                            <td class="shadow-lg rounded-3" colspan="5">
+                                <ul class="list-group">
+                                    @if (item.AppUsers.Count > 0)
+                                    {
+                                        <li class="list-group-item fw-bold text-center text-white shadow-lg">Faculty Members</li> <!-- Header -->
+                                    }
+                                    else
+                                    {
+                                        <li class="list-group-item fw-bold text-center text-danger shadow-lg">No Faculty Members Assigned</li> <!-- Header -->
+                                    }
+                                    @foreach (var user in item.AppUsers)
+                                    {
+                                        <li class="list-group-item text-center text-white shadow-lg bg-dark border h5">@user.Email</li>
+                                    }
+                                </ul>
+                            </td>
+                        </tr>
                     }
-                </td>
-                <td>
-                    <!-- Add file upload form -->
-                    <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data">
-                        <input type="file" name="file" />
-                        <input type="submit" value="Upload" class="btn btn-primary" />
-                    </form>
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
-                    <a asp-action="ChatLog" asp-route-id="@item.Id">Chat Log</a>
-
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-
+                </tbody>
+            </table>
+        </div>
 </div>
-
 
 @section Scripts {
     <script type="text/javascript" src="~/js/ClassTableInitialize.js"></script>
