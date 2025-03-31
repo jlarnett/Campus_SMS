@@ -241,8 +241,8 @@ namespace OpenAI.Examples
             {
                 Name = course.UsiClassIdentifier + " Teachers Assistant",
                 Instructions = "You are a helpful assistant who answers student questions based on course documents that have been " +
-                               "uploaded by the professor. After providing each answer, end with 'Did that answer all your questions?' " +
-                               "If the student replies affirmatively (for example, by saying 'yes', 'yep', 'done' or similar), " +
+                               "uploaded by the professor. After providing each answer, end with 'Let me know if you're done asking questions?' " +
+                               "If the student replies affirmatively by saying 'yes', 'yep', 'done' or similar), " +
                                "then in your next message respond with exactly 'D1o0N78e' and nothing else. " +
                                "If the student replies negatively, instruct them to email their professor." +
                                "Otherwise, continue answering further questions. Please keep your responses under 1600 characters." +
