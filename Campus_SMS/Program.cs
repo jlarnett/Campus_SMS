@@ -34,46 +34,53 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
         sqlOptions.EnableRetryOnFailure()));
 
-builder.Services.AddScoped<SmsService>();
+var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+logger.LogTrace($"Checcking builder configuration from program.cs file " +
+                $"API Key - {builder.Configuration["OpenAI:RobertAPIKey"]}" +
+                $"Account SID - {builder.Configuration["Twilio:AccountSID"]}" +
+                $"Auth Token - {builder.Configuration["Twilio:AuthToken"]}" +
+                $"From Number - {builder.Configuration["Twilio:FromPhoneNumber"]}");
 
-builder.Services.AddScoped<AiService>();
-builder.Services.AddScoped<AiServiceVectorStore>();
+//Inject the configuration into dependency injection -> Used by SmsService and other services
+builder.Services.AddSingleton(builder.Configuration);
+
+builder.Services.AddTransient<SmsService>();
+builder.Services.AddTransient<AiService>();
+builder.Services.AddTransient<AiServiceVectorStore>();
+
 builder.Services.AddDefaultIdentity<AppUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-if (builder.Environment.IsProduction())
-{
-    builder.Services.AddAuthentication(options =>
-        {
-            //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-        })
-        .AddCookie()
-        .AddOpenIdConnect("Auth0", options =>
-        {
-            options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
-            options.ClientId = builder.Configuration["Auth0:ClientId"];
-            options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
-            options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
+builder.Services.AddAuthentication(options =>
+    {
+        //options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        //options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        //options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddOpenIdConnect("Auth0", options =>
+    {
+        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}";
+        options.ClientId = builder.Configuration["Auth0:ClientId"];
+        options.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+        options.CallbackPath = builder.Configuration["Auth0:CallbackPath"];
+    
+        options.ResponseType = "code";
+        options.SaveTokens = true;
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
 
-            options.ResponseType = "code";
-            options.SaveTokens = true;
-            options.Scope.Add("openid");
-            options.Scope.Add("profile");
-            options.Scope.Add("email");
-
-            options.Events = new OpenIdConnectEvents
+        options.Events = new OpenIdConnectEvents
+        {
+            OnRedirectToIdentityProviderForSignOut = (context) =>
             {
-                OnRedirectToIdentityProviderForSignOut = (context) =>
-                {
-                    var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
-                    context.Response.Redirect(logoutUri);
-                    context.HandleResponse();
-                    return Task.CompletedTask;
-                }
-            };
-        });
-}
+                var logoutUri = $"https://{builder.Configuration["Auth0:Domain"]}/v2/logout?client_id={builder.Configuration["Auth0:ClientId"]}";
+                context.Response.Redirect(logoutUri);
+                context.HandleResponse();
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddAuthorization();
 
@@ -105,11 +112,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
 app.Run();

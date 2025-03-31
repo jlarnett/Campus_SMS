@@ -25,7 +25,7 @@ namespace OpenAI.Examples
         public AiServiceVectorStore(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
-            _apiKey = configuration.GetValue<string>("OpenAI:RobertAPIKey") ?? string.Empty;
+            _apiKey = configuration["OpenAI:RobertAPIKey"] ?? string.Empty;
             Console.WriteLine($"[DEBUG] API Key Loaded: {(_apiKey.Length > 0 ? "Yes" : "No")}");
         }
 
