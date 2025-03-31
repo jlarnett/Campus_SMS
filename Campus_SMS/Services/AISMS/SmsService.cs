@@ -47,7 +47,10 @@ public class SmsService
                 UsiClassIdentifier = "DEFAULT",
                 CourseDocuments = "Documents/Default"
             };
+            _context.Courses.Add(defaultClass);
+            _context.SaveChanges(); // Now defaultClass.Id will have a valid value
         }
+        
 
         if (user == null)
         {
@@ -78,9 +81,10 @@ public class SmsService
                     // Update opt-in status
                     user.OptStatus = true;
                     await _context.SaveChangesAsync();
-                    string optInMessage = "You have successfully opted in! You will now be able to receive course-related messages.";
+                    string optInMessage = "You have successfully opted in! You will now be able to receive course-related messages. Start by adding a join key given to you by your instructor.";
                     SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     await SendSms(phoneNumber, optInMessage);
+                    return;
                 }
                 else if (incomingMessage.Trim().ToUpper() == "QUIT")
                 {
@@ -90,6 +94,7 @@ public class SmsService
                     string optInMessage = "You have successfully opted out! You will no longer be able to receive course-related messages.";
                     SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     await SendSms(phoneNumber, optInMessage);
+                    return;
                 }
 
                 //manual course change in case of error
@@ -97,6 +102,7 @@ public class SmsService
                 {
                     user.CurrentCourse = null;
                     await _context.SaveChangesAsync();
+                    return;
                 }
 
                 var classCourse = new ClassCourse();
@@ -188,8 +194,8 @@ public class SmsService
                         {
                             user.CurrentCourse = null;
                             await _context.SaveChangesAsync();
-                            SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + course + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
-                            await SendSms(phoneNumber, "Exiting questioning for, " + course + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
+                            await SendSms(phoneNumber, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
 
                         }
                         else
