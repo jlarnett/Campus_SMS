@@ -39,6 +39,15 @@ public class SmsService
         // Check if the user exists in the database
         var user = _context.SmsUsers.FirstOrDefault(u => u.PhoneNumber == phoneNumber);
         var defaultClass = _context.Courses.FirstOrDefault(c => c.UsiClassIdentifier.ToUpper() == "DEFAULT");
+        if (defaultClass == null)
+        {
+            defaultClass = new ClassCourse
+            {
+                ClassDescription = "Default",
+                UsiClassIdentifier = "DEFAULT",
+                CourseDocuments = "Documents/Default"
+            };
+        }
 
         if (user == null)
         {
@@ -64,15 +73,6 @@ public class SmsService
             // If the user has opted in or replied with 'START', process the message
             if (user.OptStatus || incomingMessage.Trim().ToUpper() == "BEGIN")
             {
-                if (defaultClass == null)
-                {
-                    defaultClass = new ClassCourse
-                    {
-                        ClassDescription = "Default",
-                        UsiClassIdentifier = "DEFAULT",
-                        CourseDocuments = "Documents/Default"
-                    };
-                }
                 if (incomingMessage.Trim().ToUpper() == "BEGIN")
                 {
                     // Update opt-in status
