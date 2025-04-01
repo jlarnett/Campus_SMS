@@ -1,0 +1,51 @@
+﻿@model Campus_SMS.Entities.ClassCourse
+
+@{
+    ViewData["Title"] = $"{Model.UsiClassIdentifier} Course Documents";
+}
+
+<h1 class="text-center">@Model.UsiClassIdentifier Course Documents</h1>
+
+@{
+    var pathToCourseDocuments = $"../Campus_SMS/{Model.CourseDocuments}";
+    var directoryInformation = new DirectoryInfo(pathToCourseDocuments);
+
+    var files = directoryInformation.GetFiles();
+}
+
+<div class="container border border-white rounded-2 shadow-lg p-2">
+    <table class="table table-striped" id="CourseDocumentsTable">
+        <thead>
+            <tr>
+                <th class="col">
+                    Document Name
+                </th>
+                <th class="col">
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+        @{
+            foreach (var item in files)
+            {
+                <tr>
+                    <td>
+                        @item.Name
+                    </td>
+                    <td>
+                        <a asp-action="Delete" class="btn btn-outline-danger"><span>Remove Document Mapping</span></a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/ChatLogTableInitialize.js"></script>
+}

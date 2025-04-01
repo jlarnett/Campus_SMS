@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Campus_SMS.Data;
+﻿using Campus_SMS.Data;
 using Campus_SMS.Dto;
 using Campus_SMS.Entities;
 using Campus_SMS.Entities.User;
 using Campus_SMS.Views.ClassCourses.Vms;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using UglyToad.PdfPig.Logging;
 
 namespace Campus_SMS.Controllers
 {
@@ -56,6 +57,26 @@ namespace Campus_SMS.Controllers
 
             var classCourse = await _context.Courses
                 .FirstOrDefaultAsync(m => m.Id == id);
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            return View(classCourse);
+        }
+
+        // GET: ClassCourses/Documents/5
+        [Authorize]
+        public async Task<IActionResult> Documents(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var classCourse = await _context.Courses
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (classCourse == null)
             {
                 return NotFound();

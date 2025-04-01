@@ -82,17 +82,43 @@ new Chart(ctx3, {
     }
 });
 
+// Generate days of the month (1 - 31)
+const daysOfMonth = Array.from({ length: 7 }, (_, i) => i + 1);
+        
+// Example response times (in milliseconds)
+const responseTimes = Array.from({ length: 7 }, () => Math.floor(Math.random() * 500) + 100);
+
 new Chart(ctx4, {
     type: 'line',
     data: {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-    datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-    }]
+        labels: daysOfMonth.map(day => `Day ${day}`),
+        datasets: [{
+            label: 'Response Time (ms)',
+            data: responseTimes,
+            borderColor: 'green',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            borderWidth: 1,
+            pointRadius: 2,
+            pointBackgroundColor: 'black',
+            tension: 0.3
+        }]
     },
     options: {
-        responsive: true
+        responsive: true,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Day of the Month'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Avg Response Time (ms)'
+                },
+                beginAtZero: true
+            }
+        }
     }
 });
