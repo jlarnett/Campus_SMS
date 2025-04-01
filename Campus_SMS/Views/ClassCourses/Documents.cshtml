@@ -1,4 +1,6 @@
-﻿@model Campus_SMS.Entities.ClassCourse
+﻿@using System.IO
+@model Campus_SMS.Entities.ClassCourse
+@inject IWebHostEnvironment Env
 
 @{
     ViewData["Title"] = $"{Model.UsiClassIdentifier} Course Documents";
@@ -7,14 +9,19 @@
 <h1 class="text-center">@Model.UsiClassIdentifier Course Documents</h1>
 
 @{
-    var pathToCourseDocuments = $"../Campus_SMS/{Model.CourseDocuments}";
-    var directoryInformation = new DirectoryInfo(pathToCourseDocuments);
+    var pathToCourseDocuments = System.IO.Path.Combine(Env.ContentRootPath, Model.CourseDocuments ?? string.Empty);
+    FileInfo[] files = [];
 
-    var files = directoryInformation.GetFiles();
+    if (Directory.Exists(pathToCourseDocuments))
+    {
+        var directoryInfo = new DirectoryInfo(pathToCourseDocuments);
+        files = directoryInfo.GetFiles();
+    }
+
 }
 
 <div class="container border border-white rounded-2 shadow-lg p-2">
-    <table class="table table-striped" id="CourseDocumentsTable">
+    <table class="table table-striped" id="CourseDocuments">
         <thead>
             <tr>
                 <th class="col">
@@ -34,7 +41,7 @@
                         @item.Name
                     </td>
                     <td>
-                        <a asp-action="Delete" class="btn btn-outline-danger"><span>Remove Document Mapping</span></a>
+                        <a asp-action="Delete" class="btn btn-outline-danger"><span>Remove Document</span></a>
                     </td>
                 </tr>
             }
@@ -47,5 +54,5 @@
 </div>
 
 @section Scripts {
-    <script type="text/javascript" src="~/js/ChatLogTableInitialize.js"></script>
+    <script type="text/javascript" src="~/js/CourseDocumentTableInitialize.js"></script>
 }
