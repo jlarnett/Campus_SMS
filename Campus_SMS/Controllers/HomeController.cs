@@ -26,15 +26,48 @@ namespace Campus_SMS.Controllers
             _signInManager = signInManager;
         }
 
+        public static Dictionary<string, int> FindCommonWords(List<string> strings)
+        {
+            // Dictionary to store word counts across all strings
+            var wordCounts = new Dictionary<string, int>();
+
+            // Tokenize each string into words and update the counts
+            foreach (var str in strings)
+            {
+                var words = str.ToLower().Split(' ');
+
+                foreach (var word in words)
+                {
+                    if (wordCounts.ContainsKey(word))
+                    {
+                        wordCounts[word]++;
+                    }
+                    else
+                    {
+                        wordCounts[word] = 1;
+                    }
+                }
+            }
+
+            // Find the words that appear in all strings
+            var commonWords = wordCounts.Where(kvp => strings.All(s => s.ToLower().Contains(kvp.Key)))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            return commonWords;
+        }
+
         public async Task<IActionResult> Index()
         {
             DashboardVm vm;
+
+
 
             if (_signInManager.IsSignedIn(User))
             {
                 var courses = await _context.ClassProfessorMappings.Where(c => c.AppUserId.Equals(_userManager.GetUserId(User))).Include(c => c.Class).ToListAsync();
                 Dictionary<string, int> courseSmsCount = [];
                 Dictionary<string, int> courseEscalationCount = [];
+                Dictionary<string, Dictionary<string, int>> courseCommonWords = [];
 
                 foreach (var course in courses)
                 {
@@ -43,13 +76,17 @@ namespace Campus_SMS.Controllers
                         await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId) && s.IncomingSmsMessage.Contains("escalate")).CountAsync();
                     courseSmsCount.Add(course.Class.UsiClassIdentifier, count);
                     courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
+
+                    var messages = await _context.SmsInteractions.Where(p => p.CourseId.Equals(course.ClassCourseId)).Select(p => p.IncomingSmsMessage).ToListAsync();
+                    var commonWords = FindCommonWords(messages);
+                    courseCommonWords.Add(course.Class.UsiClassIdentifier, commonWords);
                 }
 
-                vm = new DashboardVm(courseSmsCount, courseEscalationCount);
+                vm = new DashboardVm(courseSmsCount, courseEscalationCount, courseCommonWords);
             }
             else
             {
-                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>());
+                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>(), new Dictionary<string, Dictionary<string, int>>());
             }
 
             return View(vm);
