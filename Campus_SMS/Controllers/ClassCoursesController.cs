@@ -189,12 +189,19 @@ namespace Campus_SMS.Controllers
                 //Path for course documents
                 string newFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
 
-                // Check if the "Documents" folder already exists
+                // If does not exist make it.
+                if (!Directory.Exists(FolderPath))
+                {
+                    Directory.CreateDirectory(FolderPath);
+                }
+
+                // Check if the "Documents" folder exists
                 if (Directory.Exists(FolderPath))
                 {
                     // Create the new course material folder
                     Directory.CreateDirectory(newFolderPath);
                 }
+                
 
                 if (result > 0 && classCourseDto.AppUserIds.Any(c => c.IsChecked))
                 {
@@ -371,9 +378,15 @@ namespace Campus_SMS.Controllers
             foreach (var interaction in interactions)
             {
                 interaction.CourseId = null;
-            }
+            }            
+            await _context.SaveChangesAsync();
 
-            await _context.SaveChangesAsync(); // Save changes before deleting course
+            var mappings = _context.ClassProfessorMappings.Where(m => m.ClassCourseId == id);
+            foreach(var mapping in mappings)
+            {
+                _context.ClassProfessorMappings.RemoveRange(mapping);
+            }
+            await _context.SaveChangesAsync();
 
             if (classCourse != null)
             {
@@ -439,9 +452,8 @@ namespace Campus_SMS.Controllers
                         await file.CopyToAsync(stream);
                     }
                 }
+                await _AiService.CreateAssistent(classCourse.JoinKey, courseFolderPath);
             }
-
-            await _AiService.CreateAssistent(classCourse.JoinKey, courseFolderPath);
 
             return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
         }
