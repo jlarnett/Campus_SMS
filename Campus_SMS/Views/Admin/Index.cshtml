@@ -1,25 +1,57 @@
 ﻿@{
     ViewData["Title"] = "Admin Dashboard";
 }
+<div class="admin-dashboard">
+    <!-- Header -->
+    <header class="admin-header">
+        <h1>Hello, Admin</h1>
+    </header>
 
-<h2 class="text-center mt-4">Admin Dashboard</h2>
-
-<div class="container mt-5">
-    <div class="row">
-        <div class="col mb-3">
-            <a asp-action="ManageFaculty" class="btn btn-primary w-100">Manage Faculty</a>
-        </div>
-        <div class="col mb-3">
-            <a asp-action="ManageStudents" class="btn btn-primary w-100">Manage Students</a>
-        </div>
-        <div class="col-md-4 mb-3">
-            <a asp-action="ManageCourses" class="btn btn-primary w-100">Manage Courses</a>
-        </div>
-        <div class="col-md-4 mb-3">
-            <a asp-action="ManageDocuments" class="btn btn-secondary w-100">Manage Documents</a>
-        </div>
-        <div class="col-md-4 mb-3">
-            <a asp-action="ViewAnalytics" class="btn btn-info w-100">View Analytics</a>
-        </div>
+    <!-- Top Tab Navigation -->
+    <nav class="admin-tabs">
+        <a href="#" class="tab active">Faculty</a>
+        <a href="#" class="tab">Students</a>
+        <a href="#" class="tab">Course Management</a>
+    </nav>
+    <!-- Main Content Area -->
+    <div class="admin-body">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Faculty List</h2>
+            <input type="text" placeholder="Search" class="sidebar-search" />
+            <ul class="sidebar-list">
+                <!-- Dynamically populated faculty list -->
+            </ul>
+            <button class="add-member">+ Add Faculty Member</button>
+        </aside>
+        <!-- Main Content Section -->
+        <section class="main-content">
+            <!-- Faculty Info -->
+            <div class="admin-info">
+                <h2 class="admin-name">[Select a faculty]</h2>
+                <p class="admin-email">[Faculty email here]</p>
+            </div>
+            <!-- Permissions & Classes Section -->
+            <div class="admin-panels">
+                <!-- Permissions Panel -->
+                <div class="admin-panel">
+                    <h3 class="panel-title">Permissions</h3>
+                    <ul class="toggle-list">
+                        <li><label>View chat logs <input type="checkbox" /></label></li>
+                        <li><label>Update Syllabus <input type="checkbox" /></label></li>
+                        <li><label>Remove Students <input type="checkbox" /></label></li>
+                    </ul>
+                    <button class="remove-user">Remove User</button>
+                </div>
+                <!-- Classes Panel -->
+                <div class="admin-panel">
+                    <h3 class="panel-title">Classes</h3>
+                    <ul class="class-list">
+                        <!-- Dynamically populated class list -->
+                    </ul>
+                    <button class="add-class">Add New Class</button>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
