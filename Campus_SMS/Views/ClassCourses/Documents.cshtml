@@ -1,58 +1,110 @@
 ﻿@using System.IO
 @model Campus_SMS.Entities.ClassCourse
 @inject IWebHostEnvironment Env
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery AntiForgery
 
 @{
     ViewData["Title"] = $"{Model.UsiClassIdentifier} Course Documents";
-}
-
-<h1 class="text-center">@Model.UsiClassIdentifier Course Documents</h1>
-
-@{
     var pathToCourseDocuments = System.IO.Path.Combine(Env.ContentRootPath, Model.CourseDocuments ?? string.Empty);
-    FileInfo[] files = [];
+    System.IO.FileInfo[] files = [];
 
-    if (Directory.Exists(pathToCourseDocuments))
+    if (System.IO.Directory.Exists(pathToCourseDocuments))
     {
-        var directoryInfo = new DirectoryInfo(pathToCourseDocuments);
+        var directoryInfo = new System.IO.DirectoryInfo(pathToCourseDocuments);
         files = directoryInfo.GetFiles();
     }
 
+    var antiForgeryToken = AntiForgery.GetAndStoreTokens(Context).RequestToken;
 }
+
+<!-- CSRF Token for fetch API -->
+<input type="hidden" id="RequestVerificationToken" value="@antiForgeryToken" />
+
+<h1 class="text-center">@Model.UsiClassIdentifier Course Documents</h1>
 
 <div class="container border border-white rounded-2 shadow-lg p-2">
     <table class="table table-striped" id="CourseDocuments">
         <thead>
             <tr>
-                <th class="col">
-                    Document Name
-                </th>
-                <th class="col">
-                    Actions
-                </th>
+                <th class="col">Document Name</th>
+                <th class="col">Actions</th>
             </tr>
         </thead>
         <tbody>
-        @{
-            foreach (var item in files)
+            @foreach (var item in files)
             {
                 <tr>
+                    <td>@item.Name</td>
                     <td>
-                        @item.Name
-                    </td>
-                    <td>
-                        <a asp-action="Delete" class="btn btn-outline-danger"><span>Remove Document</span></a>
+                        <button class="btn btn-outline-danger delete-btn"
+                                data-course-id="@Model.Id"
+                                data-file-name="@item.Name">
+                            Remove Document
+                        </button>
                     </td>
                 </tr>
             }
-        }
         </tbody>
     </table>
 </div>
+
 <div>
     <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
     <script type="text/javascript" src="~/js/CourseDocumentTableInitialize.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const csrfToken = document.getElementById("RequestVerificationToken")?.value;
+
+            if (!csrfToken) {
+                console.error("CSRF token not found in the DOM.");
+                return;
+            }
+
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", async function () {
+                    const courseId = this.getAttribute("data-course-id");
+                    const fileName = this.getAttribute("data-file-name");
+
+                    if (!courseId || !fileName) {
+                        alert("Missing course ID or file name.");
+                        return;
+                    }
+
+                    if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
+
+                    try {
+                        const response = await fetch("/ClassCourses/DeleteDocument", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "RequestVerificationToken": csrfToken
+                            },
+                            body: JSON.stringify({
+                                CourseId: parseInt(courseId),
+                                FileName: fileName
+                            })
+                        });
+
+                        const text = await response.text();
+                        console.log("Raw response:", text);
+
+                        const data = text ? JSON.parse(text) : null;
+
+                        if (data?.success) {
+                            location.reload();
+                        } else {
+                            alert("Error: " + (data?.message || "Unknown error"));
+                        }
+                    } catch (err) {
+                        console.error("Fetch error:", err);
+                        alert("Unexpected error. Check console for details.");
+                    }
+                });
+            });
+        });
+    </script>
 }

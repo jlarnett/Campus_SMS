@@ -442,5 +442,58 @@ namespace Campus_SMS.Controllers
         {
             return _context.Courses.Any(e => e.Id == id);
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteDocument([FromBody] DocumentDeleteRequest request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrEmpty(request.FileName))
+                {
+                    return Json(new { success = false, message = "Invalid request data." });
+                }
+
+                var classCourse = await _context.Courses.FindAsync(request.CourseId);
+                if (classCourse == null || string.IsNullOrEmpty(classCourse.CourseDocuments))
+                {
+                    return Json(new { success = false, message = "Course not found or missing document folder." });
+                }
+
+                string courseFolderPath = Path.Combine(Directory.GetCurrentDirectory(), classCourse.CourseDocuments);
+                string absoluteFilePath = Path.Combine(courseFolderPath, request.FileName);
+
+                if (!System.IO.File.Exists(absoluteFilePath))
+                {
+                    return Json(new { success = false, message = "File not found on the server." });
+                }
+
+                try
+                {
+                    System.IO.File.Delete(absoluteFilePath);
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Error deleting file: " + ex.Message });
+                }
+
+        
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Server error: " + ex.Message });
+            }
+        }
+
+
+
+        public class DocumentDeleteRequest
+        {
+            public int CourseId { get; set; }
+            public string FileName { get; set; }
+        }
+
     }
 }

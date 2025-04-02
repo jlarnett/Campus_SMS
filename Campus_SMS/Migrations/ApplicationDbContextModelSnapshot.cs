@@ -34,7 +34,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasIndex("ClassCoursesId");
 
-                    b.ToTable("AppUserClassCourse");
+                    b.ToTable("AppUserClassCourse", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.Announcement", b =>
@@ -57,7 +57,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Announcements");
+                    b.ToTable("Announcements", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.ClassCourse", b =>
@@ -89,7 +89,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.ClassProfessor", b =>
@@ -112,7 +112,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasIndex("ClassCourseId");
 
-                    b.ToTable("ClassProfessorMappings");
+                    b.ToTable("ClassProfessorMappings", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.OpenAIUploadedDocs", b =>
@@ -133,7 +133,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OpenAIUploadedDocs");
+                    b.ToTable("OpenAIUploadedDocs", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.SMSUser", b =>
@@ -162,7 +162,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SmsUsers");
+                    b.ToTable("SmsUsers", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.SmsInteraction", b =>
@@ -201,7 +201,7 @@ namespace Campus_SMS.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("SmsInteractions");
+                    b.ToTable("SmsInteractions", (string)null);
                 });
 
             modelBuilder.Entity("Campus_SMS.Entities.User.AppUser", b =>
