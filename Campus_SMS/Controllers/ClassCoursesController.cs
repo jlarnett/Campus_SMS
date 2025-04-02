@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using OpenAI.Examples;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,12 +21,14 @@ namespace Campus_SMS.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly AiServiceVectorStore _AiService;
 
 
-        public ClassCoursesController(ApplicationDbContext context, UserManager<AppUser> userManager)
+        public ClassCoursesController(ApplicationDbContext context, UserManager<AppUser> userManager, AiServiceVectorStore aiService)
         {
             _context = context;
             _userManager = userManager;
+            _AiService = aiService;
         }
 
         // GET: ClassCourses
@@ -282,7 +285,7 @@ namespace Campus_SMS.Controllers
                         ClassDescription = classCourseDto.ClassDescription,
                         UsiClassIdentifier = classCourseDto.UsiClassIdentifier,
                         CourseDocuments = classCourseDto.CourseDocuments,
-                        JoinKey = classCourseDto.JoinKey
+                        JoinKey = classCourseDto.JoinKey ?? ""
                     };
 
                     _context.Update(classCourse);
@@ -428,13 +431,68 @@ namespace Campus_SMS.Controllers
                 string filePath = Path.Combine(courseFolderPath, fileName);
 
                 // Save the file to the disk
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName);
+                if (!exists)
                 {
-                    await file.CopyToAsync(stream);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                }
+            }
+
+            await _AiService.CreateAssistent(classCourse.JoinKey, courseFolderPath);
+
+            return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
+        }
+
+        public async Task<IActionResult> DeleteFile(int id, string docName)
+        {
+            Console.WriteLine("the file name is: ", docName);
+            var file = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == docName);
+            if (file == null)
+            {
+                Console.WriteLine("No File Found");
+                return NotFound();
+            }
+
+            // Retrieve the course from the database
+            var classCourse = await _context.Courses.FindAsync(id);
+            if (classCourse == null)
+            {
+                Console.WriteLine("No Class Found");
+                return NotFound();
+            }
+
+            // Get the current working directory
+            string currentDirectory = Directory.GetCurrentDirectory();
+
+            // Define the path to store the file
+            string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+
+            if (Directory.Exists(courseFolderPath))
+            {
+                // Generate a filename for the file
+                string fileName = Path.GetFileName(file.DocumentName);
+                string filePath = Path.Combine(courseFolderPath, fileName);
+
+                // Delete the file to the disk
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                    await _AiService.DeleteDocumentsOpenAI(file.DocumentID, classCourse.CourseDocuments, classCourse.JoinKey);
                 }
             }
 
             return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckFileExists(string fileName)
+        {
+            bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName);
+
+            return Json(new { exists });
         }
 
 

@@ -64,7 +64,7 @@
                     @foreach (var item in Model)
                     {
                         var uniqueIdentifier = Guid.NewGuid();
-                        <tr data-bs-toggle="collapse" role="button" data-bs-target="#hidden-row-@uniqueIdentifier">
+                        <tr role="button" data-bs-target="#hidden-row-@uniqueIdentifier">
                             <th scope="row">
                                 <button class="btn toggle-btn" data-bs-toggle="collapse" data-bs-target="#hidden-row-@uniqueIdentifier" aria-expanded="false">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi chevron-up" viewBox="0 0 16 16">
@@ -83,18 +83,23 @@
                             </td>
                             <td>
                                 <!-- Add file upload form -->
-                                <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data">
-                                    <input type="file" name="file" />
-                                    <input type="submit" value="Upload" class="btn btn-outline-success" />
+                            <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data" onsubmit="return validateFileUpload(event, this, @item.Id);">
+                                    <div class="input-group">
+                                        <input type="file" name="file" id="fileInput-@item.Id" class="form-control" onchange="updateFileName(this, @item.Id);" hidden>
+                                        <label for="fileInput-@item.Id" class="btn btn-outline-primary">Choose File</label>
+                                        <button type="submit" class="btn btn-success" onclick="event.stopPropagation();">Upload</button>
+                                </div>
+                                <span id="fileName-@item.Id" class="form-control text-truncate">No file chosen</span>
+                                <small class="text-danger" id="fileError-@item.Id" style="display:none;">Please select a file to upload.</small>
                                 </form>
                             </td>
                             <td>
                                 <div class="action-links ">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary"><span>Edit</span></a> |
-                                <a asp-action="Details" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary"><span>Details</span></a> |
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="no-collapse btn btn-outline-danger"><span>Delete</span></a> |
-                                <a asp-action="ChatLog" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary"><span>Chat Log</span></a> |
-                                <a asp-action="Documents" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary"><span>Manage Course Documents</span></a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary" onclick="event.stopPropagation();"><span>Edit</span></a> |
+                                <a asp-action="Details" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary" onclick="event.stopPropagation();"><span>Details</span></a> |
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="no-collapse btn btn-outline-danger" onclick="event.stopPropagation();"><span>Delete</span></a> |
+                                <a asp-action="ChatLog" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary" onclick="event.stopPropagation();"><span>Chat Log</span></a> |
+                                <a asp-action="Documents" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary" onclick="event.stopPropagation();"><span>Manage Course Documents</span></a>
 
                                 </div>
                             </td>
@@ -125,4 +130,60 @@
 
 @section Scripts {
     <script type="text/javascript" src="~/js/ClassTableInitialize.js"></script>
+    <script>
+        function updateFileName(input, itemId) {
+            const fileNameSpan = document.getElementById("fileName-" + itemId);
+            fileNameSpan.textContent = input.files.length > 0 ? input.files[0].name : "No file chosen";
+        }
+
+        async function validateFileUpload(event, form, itemId) {
+            event.preventDefault()
+            const fileInput = form.querySelector("input[type='file']");
+            const fileError = form.querySelector(".text-danger");
+
+            if (!fileInput.files.length) {
+                fileError.textContent = "Please select a file to upload.";
+                fileError.style.display = "block";
+                event.preventDefault();
+                return false;
+            }
+
+            const fileName = fileInput.files[0].name;
+            console.log("Selected file:", fileName);
+            // Send AJAX request to check if file exists
+            const exists = await checkFileExists(fileName);
+
+            if (exists) {
+                fileError.textContent = "This file name is unavailable.";
+                fileError.style.display = "block";
+                event.preventDefault();
+                return false;
+            }
+
+            console.log("File does not exist, proceeding with upload.");
+            fileError.style.display = "none";
+            form.submit();
+            return true;
+        }
+
+        async function checkFileExists(fileName) {
+            try {
+                const response = await fetch(`/ClassCourses/CheckFileExists?fileName=${encodeURIComponent(fileName)}`);
+
+                if (!response.ok) {
+                    console.log("Error: Server response was not OK.");
+                    return false;
+                }
+
+                const data = await response.json();
+                console.log("Server response:", data);
+
+                return data.exists;
+            } catch (error) {
+                console.error("Error checking file:", error);
+                return false;
+            }
+        }
+
+</script>
 }

@@ -101,7 +101,7 @@ namespace OpenAI.Examples
                     }
                     catch (Exception ex)
                     {
-                        if (ex.Message.Contains("No assistant found with id"))
+                        if (ex.Message.Contains("No assistant found with id") || ex.Message.Contains("Value cannot be null. (Parameter 'assistantId')"))
                         {
                             Console.WriteLine("[DEBUG] Assistant already deleted.");
                         }
@@ -112,7 +112,7 @@ namespace OpenAI.Examples
                             throw;
                         }
                     }
-                    assistentId = await CreateAssistent(courseKey, fileIds);
+                    assistentId = await CreateAssistent(courseKey, directoryPath);
                 }
                 else
                 {
@@ -124,7 +124,7 @@ namespace OpenAI.Examples
             else
             {
                 Console.WriteLine("[DEBUG] No Assistent detected. Creating assistant...");
-                assistentId = await CreateAssistent(courseKey, fileIds);
+                assistentId = await CreateAssistent(courseKey, directoryPath);
             }
 
             // Fetch messages from this number to maintain history
@@ -160,12 +160,12 @@ namespace OpenAI.Examples
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("No assistant found with id"))
+                if (ex.Message.Contains("No assistant found with id") || ex.Message.Contains("Value cannot be null. (Parameter 'assistantId')"))
                 {
                     Console.WriteLine("[DEBUG] Assistant not found. Creating a new assistant...");
 
                     // Create a new assistant
-                    var newAssistant = await CreateAssistent(courseKey,fileIds);
+                    var newAssistant = await CreateAssistent(courseKey, directoryPath);
 
                     // Retry thread creation with new assistant ID
                     threadRun = await assistantClient.CreateThreadAndRunAsync(newAssistant, threadOptions);
@@ -231,11 +231,65 @@ namespace OpenAI.Examples
             return response.Trim();
         }
 
-        public async Task<string> CreateAssistent(string courseKey, List<string> fileIds)
+        public async Task<string> CreateAssistent(string courseKey, string directoryPath)
         {
             var course = _context.Courses.FirstOrDefault(c => c.JoinKey == courseKey);
             OpenAIClient openAIClient = new(_apiKey);
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
+            OpenAIFileClient fileClient = openAIClient.GetOpenAIFileClient();
+            OpenAIFile file = null;
+            List<string> fileIds = new();
+
+            //Delete old assistent if one exists
+            try
+            {
+                Console.WriteLine("[DEBUG] Deleting old assistant");
+                await assistantClient.DeleteAssistantAsync(course.AssistentId);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("No assistant found with id") || ex.Message.Contains("Value cannot be null. (Parameter 'assistantId')"))
+                {
+                    Console.WriteLine("[DEBUG] Assistant either is already deleted or has not been created yet.");
+                }
+                else
+                {
+                    // Log or rethrow other exceptions
+                    Console.WriteLine($"[ERROR] Unexpected error: {ex.Message}");
+                    throw;
+                }
+            }
+
+            //uplaod files if needed
+            foreach (string filePath in Directory.GetFiles(directoryPath))
+            {
+                string fileName = Path.GetFileName(filePath);
+                Console.WriteLine($"[DEBUG] Checking file: {fileName} (Full Path: {filePath})");
+                var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName);
+                if (existingDoc != null)
+                {
+                    Console.WriteLine($"[DEBUG] Existing File ID for {fileName}: {existingDoc.DocumentID}");
+                    fileIds.Add(existingDoc.DocumentID);
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] New file {fileName} detected");
+                    Console.WriteLine($"[DEBUG] Uploading file: {fileName}...");
+                    using FileStream fileStream = File.OpenRead(filePath);
+                    file = await fileClient.UploadFileAsync(fileStream, fileName, FileUploadPurpose.Assistants);
+                    Console.WriteLine($"[DEBUG] Uploaded File ID: {file.Id}");
+
+                    var document = new OpenAIUploadedDocs
+                    {
+                        DocumentName = fileName,  // store only file name
+                        DocumentID = file.Id
+                    };
+                    _context.OpenAIUploadedDocs.Add(document);
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"[DEBUG] Stored {fileName} in DB with ID: {file.Id}");
+                    fileIds.Add(file.Id);
+                }
+            }
             // Create or reuse the assistant without deleting it afterward.
             AssistantCreationOptions assistantOptions = new()
             {
@@ -288,7 +342,24 @@ namespace OpenAI.Examples
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
             OpenAIFile file = null;
 
-            await fileClient.DeleteFileAsync(DocId);
+            try
+            {
+                await fileClient.DeleteFileAsync(DocId);
+            }
+            catch (Exception ex) 
+            { 
+                if(ex.Message.Contains("No such File object"))
+                {
+                    Console.WriteLine($"[DEBUG] No such file with id {DocId} exist in OpenAI Storage, skipping.");
+                }
+                else
+                {
+                    // Log or rethrow other exceptions
+                    Console.WriteLine($"[ERROR] Unexpected error: {ex.Message}");
+                    throw;
+                }
+            }
+
             var doc = _context.OpenAIUploadedDocs.FirstOrDefault(d => d.DocumentID == DocId);
             if (doc != null)
             {
@@ -314,36 +385,7 @@ namespace OpenAI.Examples
             }
 
             // Recreate assistant after deleting file.
-            foreach (string filePath in Directory.GetFiles(directoryPath))
-            {
-                string fileName = Path.GetFileName(filePath);
-                Console.WriteLine($"[DEBUG] Checking file: {fileName} (Full Path: {filePath})");
-                var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName);
-                if (existingDoc != null)
-                {
-                    Console.WriteLine($"[DEBUG] Existing File ID for {fileName}: {existingDoc.DocumentID}");
-                    fileIds.Add(existingDoc.DocumentID);
-                }
-                else
-                {
-                    Console.WriteLine($"[DEBUG] New file {fileName} detected");
-                    Console.WriteLine($"[DEBUG] Uploading file: {fileName}...");
-                    using FileStream fileStream = File.OpenRead(filePath);
-                    file = await fileClient.UploadFileAsync(fileStream, fileName, FileUploadPurpose.Assistants);
-                    Console.WriteLine($"[DEBUG] Uploaded File ID: {file.Id}");
-
-                    var document = new OpenAIUploadedDocs
-                    {
-                        DocumentName = fileName,  // store only file name
-                        DocumentID = file.Id
-                    };
-                    _context.OpenAIUploadedDocs.Add(document);
-                    await _context.SaveChangesAsync();
-                    Console.WriteLine($"[DEBUG] Stored {fileName} in DB with ID: {file.Id}");
-                    fileIds.Add(file.Id);
-                }
-            }
-            await CreateAssistent(JoinKey, fileIds);
+            await CreateAssistent(JoinKey, CourceDocumentsPath);
         }
     }
 }
