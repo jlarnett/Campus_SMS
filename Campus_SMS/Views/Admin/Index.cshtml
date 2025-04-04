@@ -1,6 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Admin Dashboard";
 }
+<script src="~/js/tabs.js" defer></script>
+<link href="~/css/site.css" rel="stylesheet">
 <div class="admin-dashboard">
     <!-- Header -->
     <header class="admin-header">
@@ -8,50 +10,63 @@
     </header>
 
     <!-- Top Tab Navigation -->
-    <nav class="admin-tabs">
-        <a href="#" class="tab active">Faculty</a>
-        <a href="#" class="tab">Students</a>
-        <a href="#" class="tab">Course Management</a>
-    </nav>
-    <!-- Main Content Area -->
-    <div class="admin-body">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <h2 class="sidebar-title">Faculty List</h2>
-            <input type="text" placeholder="Search" class="sidebar-search" />
-            <ul class="sidebar-list">
-                <!-- Dynamically populated faculty list -->
-            </ul>
-            <button class="add-member">+ Add Faculty Member</button>
-        </aside>
-        <!-- Main Content Section -->
-        <section class="main-content">
-            <!-- Faculty Info -->
-            <div class="admin-info">
-                <h2 class="admin-name">[Select a faculty]</h2>
-                <p class="admin-email">[Faculty email here]</p>
-            </div>
-            <!-- Permissions & Classes Section -->
-            <div class="admin-panels">
-                <!-- Permissions Panel -->
-                <div class="admin-panel">
-                    <h3 class="panel-title">Permissions</h3>
-                    <ul class="toggle-list">
-                        <li><label>View chat logs <input type="checkbox" /></label></li>
-                        <li><label>Update Syllabus <input type="checkbox" /></label></li>
-                        <li><label>Remove Students <input type="checkbox" /></label></li>
-                    </ul>
-                    <button class="remove-user">Remove User</button>
+    <ul>
+        <li data-tab-target="#faculty" class="tab active">Faculty</li>
+        <li data-tab-target="#students" class="tab">Students</li>
+        <li data-tab-target="#courses" class="tab">Course Management</li>
+    </ul>
+   <div class="tab-content">
+        <!-- Main Content Area -->
+        <div id="faculty" data-tab-content class="tabDisplay admin-body">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Faculty List</h2>
+                <input type="text" placeholder="Search" class="sidebar-search" />
+                <ul class="sidebar-list">
+                    <!-- Dynamically populated faculty list -->
+                </ul>
+                <button class="add-member">+ Add Faculty Member</button>
+            </aside>
+            <!-- Main Content Section -->
+            <section class="main-content">
+                <!-- Faculty Info -->
+                <div class="admin-info">
+                    <h2 class="admin-name">[Select a faculty]</h2>
+                    <p class="admin-email">[Faculty email here]</p>
                 </div>
-                <!-- Classes Panel -->
-                <div class="admin-panel">
-                    <h3 class="panel-title">Classes</h3>
-                    <ul class="class-list">
-                        <!-- Dynamically populated class list -->
-                    </ul>
-                    <button class="add-class">Add New Class</button>
+                <!-- Permissions & Classes Section -->
+                <div class="admin-panels">
+                    <!-- Permissions Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Permissions</h3>
+                        <ul class="toggle-list">
+                            <li><label>View chat logs <input type="checkbox" /></label></li>
+                            <li><label>Update Syllabus <input type="checkbox" /></label></li>
+                            <li><label>Remove Students <input type="checkbox" /></label></li>
+                        </ul>
+                        <button class="remove-user">Remove User</button>
+                    </div>
+                    <!-- Classes Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Classes</h3>
+                        <ul class="class-list">
+                            <!-- Dynamically populated class list -->
+                        </ul>
+                        <button class="add-class">Add New Class</button>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </div>
+            </section>
+        </div>
+        <!-- Student Tab Area -->
+        <div id="students" data-tab-content class="admin-body">
+            <h1>Students</h1>
+            <p>this is the student tab</p>
+        </div>
+        <!-- Course Management Tab -->
+        <div id="courses" data-tab-content class="admin-body">
+            <h1>Course Management</h1>
+            <p>this is the course management tab</p>
+        </div>
+   </div>
+    
 </div>

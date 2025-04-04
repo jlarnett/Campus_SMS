@@ -298,3 +298,10 @@ a {
 .add-class:hover, .remove-user:hover, .add-member:hover {
     background-color: #002244; /* Darker shade for hover */
 }
+/* Sets the selected tab in admin to active */
+[data-tab-content] {
+    display: none;
+}
+.tabDisplay[data-tab-content]{
+    display: block;
+}
