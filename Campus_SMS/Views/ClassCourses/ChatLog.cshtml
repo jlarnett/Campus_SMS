@@ -1,52 +1,55 @@
 ﻿@model Campus_SMS.Views.ClassCourses.Vms.ChatLogVm
 
+@functions {
+    private string FormatPhoneNumber(string number)
+    {
+        if (string.IsNullOrWhiteSpace(number) || number.Length < 11) return number;
+        var digits = number.Replace("+1", "");
+        if (digits.Length != 10) return number;
+        return $"({digits.Substring(0, 3)}) {digits.Substring(3, 3)}-{digits.Substring(6, 4)}";
+    }
+}
+
 @{
     ViewData["Title"] = $"{Model.Class.UsiClassIdentifier} Chat Log";
 }
 
-<h1 class="text-center">@Model.Class.UsiClassIdentifier Sms Chat Log</h1>
+<h1 class="text-center">@Model.Class.UsiClassIdentifier SMS Chat Log</h1>
 
 <div class="col border border-white rounded-2 shadow-lg p-2">
-    <table class="display" id="ChatLogTable">
-        <thead>
-            <tr>
-                <th>
-                    Phone Number
-                </th>
-                <th>
-                    Sms Message Received
-                </th>
-                <th>
-                    AI Response
-                </th>
-                <th>
-                    Transaction Date
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-        @{
-            foreach (var item in Model.Log)
-            {
-                <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.PhoneNumber)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.IncomingSmsMessage)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.AiSmsResponse)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.TimeReceived)
-                    </td>
-                </tr>
-            }
-        }
-        </tbody>
-    </table>
+    @foreach (var group in Model.GroupedLogs)
+    {
+        <div class="border rounded mb-3 shadow-sm">
+            <button class="btn btn-link w-100 text-start" data-bs-toggle="collapse" data-bs-target="#chat-@group.Key.GetHashCode()">
+                @FormatPhoneNumber(group.Key) — First Message: @group.Value.FirstOrDefault()?.IncomingSmsMessage
+            </button>
+            <div id="chat-@group.Key.GetHashCode()" class="collapse">
+                <div class="p-3" style="background-color: #f1f1f1; max-height: 400px; overflow-y: auto;">
+                    @foreach (var msg in group.Value.OrderBy(m => m.TimeReceived))
+                    {
+                        <div class="d-flex flex-column gap-1 mb-3">
+                            <div class="d-flex">
+                                <div class="p-2 rounded-3 shadow-sm bg-white border" style="max-width: 75%;">
+                                    <div class="fw-bold text-primary">@FormatPhoneNumber(group.Key)</div>
+                                    <div>@msg.IncomingSmsMessage</div>
+                                    <div class="text-muted small text-end">@msg.TimeReceived.ToString("MMM dd, yyyy hh:mm tt")</div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <div class="p-2 rounded-3 shadow-sm bg-success text-white" style="max-width: 75%;">
+                                    <div class="fw-bold">AI</div>
+                                    <div>@msg.AiSmsResponse</div>
+                                    <div class="text-light small text-end">@msg.TimeResponded.ToString("MMM dd, yyyy hh:mm tt")</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
 <div>
     <a asp-action="Index">Back to List</a>
 </div>

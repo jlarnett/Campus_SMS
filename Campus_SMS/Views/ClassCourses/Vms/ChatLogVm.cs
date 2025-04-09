@@ -4,7 +4,7 @@ namespace Campus_SMS.Views.ClassCourses.Vms
 {
     public class ChatLogVm
     {
-        public List<SmsInteraction> Log { get; set; } = [];
-        public required ClassCourse Class { get; set; }
+        public ClassCourse Class { get; set; }
+        public Dictionary<string, List<SmsInteraction>> GroupedLogs { get; set; }
     }
 }
