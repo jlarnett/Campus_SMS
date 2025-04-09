@@ -38,6 +38,8 @@ public class SmsService
 
         // Check if the user exists in the database
         var user = _context.SmsUsers.FirstOrDefault(u => u.PhoneNumber == phoneNumber);
+
+        //default class for course creation
         var defaultClass = _context.Courses.FirstOrDefault(c => c.UsiClassIdentifier.ToUpper() == "DEFAULT");
         if (defaultClass == null)
         {
@@ -140,7 +142,7 @@ public class SmsService
                         else
                         {
                             user.EnrolledCourses.Remove(course);
-                            SaveSmsInteraction(phoneNumber, incomingMessage, "You have been removed from, " + course+", due to either removal from course or course no longer exists.", defaultClass.Id);
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "You have been removed from, " + course+", because the course no longer exists.", defaultClass.Id);
                             await SendSms(phoneNumber, "You have been removed from, " + course + ", due to either removal from course or course no longer exists.");
                             classCourse = null;
                         }
@@ -179,6 +181,8 @@ public class SmsService
                     }
                 }
 
+                
+
                 // Check if we need to ask for course ID
                 if (string.IsNullOrEmpty(syllabusText))
                 {
@@ -186,6 +190,18 @@ public class SmsService
                     {
                         // Set syllabusText to course documents
                         syllabusText = classCourse.CourseDocuments;
+
+                        //Check if blocked from messaging course.
+                        if (classCourse.BlockedNumbers != null)
+                        {
+                            if (classCourse.BlockedNumbers.Contains(user.PhoneNumber)) 
+                            {
+                                user.CurrentCourse = null;
+                                SaveSmsInteraction(phoneNumber, incomingMessage, "Blocked from messaging, " + classCourse.UsiClassIdentifier + ". If you think this is a mistake, please contact your instructor.", defaultClass.Id);
+                                await SendSms(phoneNumber, "Blocked from messaging, " + classCourse.UsiClassIdentifier + ". If you think this is a mistake, please contact your instructor.");
+                                return;
+                            }
+                        }
 
                         // Proceed with AI response generation
                         var course = user.CurrentCourse;
