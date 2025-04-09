@@ -156,6 +156,16 @@ a {
 }
 
 /* Tabs */
+.tab {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    padding: 10px;
+    text-decoration: none;
+    color: #003366; /* USI Blue */
+}
+.tab:hover {
+    cursor: pointer;
+}
 .admin-tabs {
     display: flex;
     justify-content: flex-start;
@@ -180,6 +190,7 @@ a {
         .admin-tabs .tab:hover {
             color: #002244; /* Darker shade for hover */
         }
+
 
 /* Sidebar */
 .sidebar {
