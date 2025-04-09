@@ -94,14 +94,38 @@
                                 </form>
                             </td>
                             <td>
-                                <div class="action-links ">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary" onclick="event.stopPropagation();"><span>Edit</span></a> |
-                                <a asp-action="Details" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary" onclick="event.stopPropagation();"><span>Details</span></a> |
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="no-collapse btn btn-outline-danger" onclick="event.stopPropagation();"><span>Delete</span></a> |
-                                <a asp-action="ChatLog" asp-route-id="@item.Id" class="no-collapse btn btn-outline-primary" onclick="event.stopPropagation();"><span>Chat Log</span></a> |
-                                <a asp-action="Documents" asp-route-id="@item.Id" class="no-collapse btn btn-outline-secondary" onclick="event.stopPropagation();"><span>Manage Course Documents</span></a>
+                            <div class="mt-2">
+                                <!-- Toggle Button -->
+                                <button class="btn btn-outline-light mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#actions-@item.Id" aria-expanded="false" aria-controls="actions-@item.Id">
+                                    <i class="bi bi-three-dots"></i> Actions
+                                </button>
 
+                                <!-- Collapsible Actions Section -->
+                                <div class="collapse" id="actions-@item.Id">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a asp-action="ChatLog" asp-route-id="@item.Id" class="btn btn-outline-primary" onclick="event.stopPropagation();">
+                                            <i class="bi bi-chat-dots me-1"></i> Chat Log
+                                        </a>
+                                        <a asp-action="Documents" asp-route-id="@item.Id" class="btn btn-outline-secondary" onclick="event.stopPropagation();">
+                                            <i class="bi bi-folder me-1"></i> Course Docs
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info" onclick="event.stopPropagation();">
+                                            <i class="bi bi-info-circle me-1"></i> Details
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-success" onclick="event.stopPropagation();">
+                                            <i class="bi bi-pencil-square me-1"></i> Edit
+                                        </a>
+                                        <a asp-action="BlockNumber" asp-route-id="@item.Id" class="btn btn-outline-danger" onclick="event.stopPropagation();">
+                                            <i class="bi bi-slash-circle me-1"></i> Blocked Numbers
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-warning" onclick="event.stopPropagation();">
+                                            <i class="bi bi-trash me-1"></i> Delete
+                                        </a>
+                                    </div>
                                 </div>
+                            </div>
+
+
                             </td>
                         </tr>
                         <tr class="collapse accordion-collapse rounded-3 border border-2 shadow-lg hidden-row ps-3 pe-3" id="hidden-row-@uniqueIdentifier">
@@ -131,6 +155,8 @@
 @section Scripts {
     <script type="text/javascript" src="~/js/ClassTableInitialize.js"></script>
     <script>
+        let override = false;
+
         function updateFileName(input, itemId) {
             const fileNameSpan = document.getElementById("fileName-" + itemId);
             fileNameSpan.textContent = input.files.length > 0 ? input.files[0].name : "No file chosen";
@@ -151,13 +177,33 @@
             const fileName = fileInput.files[0].name;
             console.log("Selected file:", fileName);
             // Send AJAX request to check if file exists
-            const exists = await checkFileExists(fileName);
+            const exists = await checkFileExists(itemId,fileName);
 
             if (exists) {
-                fileError.textContent = "This file name is unavailable.";
-                fileError.style.display = "block";
-                event.preventDefault();
-                return false;
+                if (!override)
+                {
+                    override = true;
+                    fileError.textContent = "This file already exists. Pressing upload again will overwrite it!";
+                    fileError.style.display = "block";
+                    event.preventDefault();
+                    return false;
+                }
+                else
+                {
+                    try {
+                        const response = await fetch(`/ClassCourses/DeleteFile?id=${itemId}&docName=${encodeURIComponent(fileName)}`);
+
+                        if (!response.ok) {
+                            console.log("Error: Server response was not OK.");
+                            return false;
+                        }
+
+                        console.log("Server response: Overwriting file ");
+
+                    } catch (error) {
+                        console.error("Error overwriting file:", error);
+                    }
+                }
             }
 
             console.log("File does not exist, proceeding with upload.");
@@ -166,9 +212,9 @@
             return true;
         }
 
-        async function checkFileExists(fileName) {
+        async function checkFileExists(itemid,fileName) {
             try {
-                const response = await fetch(`/ClassCourses/CheckFileExists?fileName=${encodeURIComponent(fileName)}`);
+                const response = await fetch(`/ClassCourses/CheckFileExists?filename=${encodeURIComponent(fileName)}&id=${itemid}`);
 
                 if (!response.ok) {
                     console.log("Error: Server response was not OK.");
