@@ -106,12 +106,22 @@ namespace Campus_SMS.Controllers
                 return NotFound();
             }
 
-            var smsInteractions =
-                await _context.SmsInteractions
-                    .Where(c => c.CourseId.Equals(classCourse.Id))
-                    .ToListAsync();
+            var smsInteractions = await _context.SmsInteractions
+                .Where(c => c.CourseId.Equals(classCourse.Id))
+                .OrderBy(x => x.TimeReceived)
+                .ToListAsync();
 
-            return View(new ChatLogVm() {Class = classCourse, Log = smsInteractions});
+            var groupedLogs = smsInteractions
+                .GroupBy(x => x.PhoneNumber)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var vm = new ChatLogVm
+            {
+                Class = classCourse,
+                GroupedLogs = groupedLogs
+            };
+
+            return View(vm);
         }
 
         // GET: ClassCourses/Create
@@ -202,7 +212,7 @@ namespace Campus_SMS.Controllers
                     // Create the new course material folder
                     Directory.CreateDirectory(newFolderPath);
                 }
-                
+
 
                 if (result > 0 && classCourseDto.AppUserIds.Any(c => c.IsChecked))
                 {
@@ -297,37 +307,37 @@ namespace Campus_SMS.Controllers
                     };
 
                     _context.Update(classCourse);
-                     var result = await _context.SaveChangesAsync();
+                    var result = await _context.SaveChangesAsync();
 
-                        foreach (var user in classCourseDto.AppUserIds)
+                    foreach (var user in classCourseDto.AppUserIds)
+                    {
+                        if (user.IsChecked)
                         {
-                            if (user.IsChecked)
+                            if (!await _context.ClassProfessorMappings.AnyAsync(c =>
+                                    c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
                             {
-                                if (!await _context.ClassProfessorMappings.AnyAsync(c =>
-                                        c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
+                                await _context.ClassProfessorMappings.AddAsync(new()
                                 {
-                                    await _context.ClassProfessorMappings.AddAsync(new()
-                                    {
-                                        AppUserId = user.Id,
-                                        ClassCourseId = classCourseDto.Id
-                                    });
+                                    AppUserId = user.Id,
+                                    ClassCourseId = classCourseDto.Id
+                                });
 
-                                    await _context.SaveChangesAsync();
-                                }
+                                await _context.SaveChangesAsync();
                             }
-                            else
+                        }
+                        else
+                        {
+                            if (await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
                             {
-                                if(await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
-                                {
-                                    var mapping = await _context.ClassProfessorMappings.Where(c =>
-                                        c.AppUserId.Equals(user.Id) && c.ClassCourseId.Equals(classCourseDto.Id)).FirstAsync();
+                                var mapping = await _context.ClassProfessorMappings.Where(c =>
+                                    c.AppUserId.Equals(user.Id) && c.ClassCourseId.Equals(classCourseDto.Id)).FirstAsync();
 
-                                    _context.Remove(mapping);
-                                    var professorMappingResult = await _context.SaveChangesAsync();
-                                    if (professorMappingResult < 1)
-                                        return BadRequest();
-                                }
+                                _context.Remove(mapping);
+                                var professorMappingResult = await _context.SaveChangesAsync();
+                                if (professorMappingResult < 1)
+                                    return BadRequest();
                             }
+                        }
                     }
                 }
                 catch (DbUpdateConcurrencyException)
@@ -379,11 +389,11 @@ namespace Campus_SMS.Controllers
             foreach (var interaction in interactions)
             {
                 interaction.CourseId = null;
-            }            
+            }
             await _context.SaveChangesAsync();
 
             var mappings = _context.ClassProfessorMappings.Where(m => m.ClassCourseId == id);
-            foreach(var mapping in mappings)
+            foreach (var mapping in mappings)
             {
                 _context.ClassProfessorMappings.RemoveRange(mapping);
             }
