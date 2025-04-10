@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 
+
 namespace OpenAI.Examples
 {
     public class AiServiceVectorStore
@@ -260,12 +261,15 @@ namespace OpenAI.Examples
                 }
             }
 
+            string courseFolderName = new DirectoryInfo(directoryPath).Name;
+
             //uplaod files if needed
             foreach (string filePath in Directory.GetFiles(directoryPath))
             {
                 string fileName = Path.GetFileName(filePath);
                 Console.WriteLine($"[DEBUG] Checking file: {fileName} (Full Path: {filePath})");
-                var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName);
+
+                var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName && f.CourseFolder == courseFolderName);
                 if (existingDoc != null)
                 {
                     Console.WriteLine($"[DEBUG] Existing File ID for {fileName}: {existingDoc.DocumentID}");
@@ -281,8 +285,9 @@ namespace OpenAI.Examples
 
                     var document = new OpenAIUploadedDocs
                     {
-                        DocumentName = fileName,  // store only file name
-                        DocumentID = file.Id
+                        DocumentName = fileName,
+                        DocumentID = file.Id,
+                        CourseFolder = courseFolderName
                     };
                     _context.OpenAIUploadedDocs.Add(document);
                     await _context.SaveChangesAsync();
@@ -333,6 +338,32 @@ namespace OpenAI.Examples
             await _context.SaveChangesAsync();
             Console.WriteLine($"[DEBUG] Stored assistent in DB with ID: {assistant.Id}");
             return assistant.Id;
+        }
+
+        public async Task DeleteAssistent(string assistantId)
+        {
+            OpenAIClient openAIClient = new(_apiKey);
+            AssistantClient assistantClient = openAIClient.GetAssistantClient();
+
+            //Delete old assistent if one exists
+            try
+            {
+                Console.WriteLine("[DEBUG] Deleting assistant");
+                await assistantClient.DeleteAssistantAsync(assistantId);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("No assistant found with id") || ex.Message.Contains("Value cannot be null. (Parameter 'assistantId')"))
+                {
+                    Console.WriteLine("[DEBUG] Assistant either is already deleted or has not been created yet.");
+                }
+                else
+                {
+                    // Log or rethrow other exceptions
+                    Console.WriteLine($"[ERROR] Unexpected error: {ex.Message}");
+                    throw;
+                }
+            }
         }
 
         public async Task DeleteDocumentsOpenAI(string DocId, string CourceDocumentsPath, string JoinKey)

@@ -1,0 +1,86 @@
+﻿@using System.IO
+@model Campus_SMS.Entities.ClassCourse
+@inject IWebHostEnvironment Env
+
+@{
+    ViewData["Title"] = $"{Model.UsiClassIdentifier} Blocked numbers";
+}
+
+<h1 class="text-center">@Model.UsiClassIdentifier Blocked Numbers</h1>
+
+@{
+    var blockedNumbers = Model.BlockedNumbers;
+}
+
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">📵 Blocked Numbers</h4>
+        <button class="btn btn-outline-success" type="button" data-bs-toggle="collapse" data-bs-target="#addBlockedNumber" aria-expanded="false" aria-controls="addBlockedNumber">
+            ➕ Add Blocked Number
+        </button>
+    </div>
+
+    <!-- Add Blocked Number Form (Collapsible) -->
+    <div class="collapse mb-4" id="addBlockedNumber">
+        <div class="card card-body">
+            <form asp-action="AddBlockedNumber" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <label for="PhoneNumber" class="form-label">Phone Number</label>
+                        <input type="text" name="PhoneNumber" class="form-control" maxlength="11" pattern="^\d{11}$" placeholder="15551234567" title="Enter exactly 11 digits phone number (no spaces or letters)" required />
+                    </div>
+                    <div class="col-auto mt-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i> Block
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Blocked Numbers Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (blockedNumbers != null)
+            {
+                <table class="table table-bordered table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>📱 Phone Number</th>
+                            <th style="width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var number in blockedNumbers)
+                        {
+                            <tr>
+                                <td>@number</td>
+                                <td>
+                                    <form asp-action="RemoveBlockedNumber" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@Model.Id" />
+                                        <input type="hidden" name="PhoneNumber" value="@number" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-x-circle"></i> Unblock
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">No blocked numbers yet.</p>
+            }
+        </div>
+    </div>
+</div>
+<a asp-action="Index">Back to List</a>
+@section Scripts {
+    <script type="text/javascript" src="~/js/CourseDocumentTableInitialize.js"></script>
+}

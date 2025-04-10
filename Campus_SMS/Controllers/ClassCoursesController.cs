@@ -2,6 +2,7 @@
 using Campus_SMS.Dto;
 using Campus_SMS.Entities;
 using Campus_SMS.Entities.User;
+using Campus_SMS.Migrations;
 using Campus_SMS.Views.ClassCourses.Vms;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -105,12 +106,22 @@ namespace Campus_SMS.Controllers
                 return NotFound();
             }
 
-            var smsInteractions =
-                await _context.SmsInteractions
-                    .Where(c => c.CourseId.Equals(classCourse.Id))
-                    .ToListAsync();
+            var smsInteractions = await _context.SmsInteractions
+                .Where(c => c.CourseId.Equals(classCourse.Id))
+                .OrderBy(x => x.TimeReceived)
+                .ToListAsync();
 
-            return View(new ChatLogVm() {Class = classCourse, Log = smsInteractions});
+            var groupedLogs = smsInteractions
+                .GroupBy(x => x.PhoneNumber)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var vm = new ChatLogVm
+            {
+                Class = classCourse,
+                GroupedLogs = groupedLogs
+            };
+
+            return View(vm);
         }
 
         // GET: ClassCourses/Create
@@ -201,7 +212,7 @@ namespace Campus_SMS.Controllers
                     // Create the new course material folder
                     Directory.CreateDirectory(newFolderPath);
                 }
-                
+
 
                 if (result > 0 && classCourseDto.AppUserIds.Any(c => c.IsChecked))
                 {
@@ -296,37 +307,37 @@ namespace Campus_SMS.Controllers
                     };
 
                     _context.Update(classCourse);
-                     var result = await _context.SaveChangesAsync();
+                    var result = await _context.SaveChangesAsync();
 
-                        foreach (var user in classCourseDto.AppUserIds)
+                    foreach (var user in classCourseDto.AppUserIds)
+                    {
+                        if (user.IsChecked)
                         {
-                            if (user.IsChecked)
+                            if (!await _context.ClassProfessorMappings.AnyAsync(c =>
+                                    c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
                             {
-                                if (!await _context.ClassProfessorMappings.AnyAsync(c =>
-                                        c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
+                                await _context.ClassProfessorMappings.AddAsync(new()
                                 {
-                                    await _context.ClassProfessorMappings.AddAsync(new()
-                                    {
-                                        AppUserId = user.Id,
-                                        ClassCourseId = classCourseDto.Id
-                                    });
+                                    AppUserId = user.Id,
+                                    ClassCourseId = classCourseDto.Id
+                                });
 
-                                    await _context.SaveChangesAsync();
-                                }
+                                await _context.SaveChangesAsync();
                             }
-                            else
+                        }
+                        else
+                        {
+                            if (await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
                             {
-                                if(await _context.ClassProfessorMappings.AnyAsync(c => c.ClassCourseId.Equals(classCourseDto.Id) && c.AppUserId.Equals(user.Id)))
-                                {
-                                    var mapping = await _context.ClassProfessorMappings.Where(c =>
-                                        c.AppUserId.Equals(user.Id) && c.ClassCourseId.Equals(classCourseDto.Id)).FirstAsync();
+                                var mapping = await _context.ClassProfessorMappings.Where(c =>
+                                    c.AppUserId.Equals(user.Id) && c.ClassCourseId.Equals(classCourseDto.Id)).FirstAsync();
 
-                                    _context.Remove(mapping);
-                                    var professorMappingResult = await _context.SaveChangesAsync();
-                                    if (professorMappingResult < 1)
-                                        return BadRequest();
-                                }
+                                _context.Remove(mapping);
+                                var professorMappingResult = await _context.SaveChangesAsync();
+                                if (professorMappingResult < 1)
+                                    return BadRequest();
                             }
+                        }
                     }
                 }
                 catch (DbUpdateConcurrencyException)
@@ -378,21 +389,14 @@ namespace Campus_SMS.Controllers
             foreach (var interaction in interactions)
             {
                 interaction.CourseId = null;
-            }            
+            }
             await _context.SaveChangesAsync();
 
             var mappings = _context.ClassProfessorMappings.Where(m => m.ClassCourseId == id);
-            foreach(var mapping in mappings)
+            foreach (var mapping in mappings)
             {
                 _context.ClassProfessorMappings.RemoveRange(mapping);
             }
-            await _context.SaveChangesAsync();
-
-            if (classCourse != null)
-            {
-                _context.Courses.Remove(classCourse);
-            }
-
             await _context.SaveChangesAsync();
 
             // Get the current working directory
@@ -404,14 +408,104 @@ namespace Campus_SMS.Controllers
             //Path for course documents
             string newFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
 
-            // Check if the "Documents" folder exists
-            if (Directory.Exists(FolderPath))
+            string folderName = new DirectoryInfo(newFolderPath).Name;
+
+            // Check if the folder exists
+            if (Directory.Exists(newFolderPath))
             {
+                foreach (string filePath in Directory.GetFiles(newFolderPath))
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    Console.WriteLine($"[DEBUG] File {fileName} attepting to be deleted.");
+                    var file = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName && f.CourseFolder == folderName);
+                    if (file != null)
+                    {
+                        System.IO.File.Delete(filePath);
+                        await _AiService.DeleteDocumentsOpenAI(file.DocumentID, classCourse.CourseDocuments, classCourse.JoinKey);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ERROR] File in {folderName} not found!");
+                    }
+                }
                 // Delete the "newFolder" folder and its contents
                 Directory.Delete(newFolderPath, true);
             }
 
+            await _AiService.DeleteAssistent(classCourse.AssistentId);
+
+            if (classCourse != null)
+            {
+                _context.Courses.Remove(classCourse);
+            }
+
+            await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: ClassCourses/BlockNumber
+        [Authorize]
+        public async Task<IActionResult> BlockNumber(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var classCourse = await _context.Courses
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            return View(classCourse);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveBlockedNumber(int id, string phoneNumber)
+        {
+            var classCourse = await _context.Courses.FindAsync(id);
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            foreach (var number in classCourse.BlockedNumbers.ToList())
+            {
+                if (number == phoneNumber)
+                {
+                    classCourse.BlockedNumbers.Remove(number);
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(BlockNumber), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddBlockedNumber(int id, string phoneNumber)
+        {
+            var classCourse = await _context.Courses.FindAsync(id);
+            if (classCourse == null)
+            {
+                return NotFound();
+            }
+
+            if(classCourse.BlockedNumbers == null)
+            {
+                classCourse.BlockedNumbers = [];
+            }
+
+            classCourse.BlockedNumbers.Add("+"+phoneNumber);
+            
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(BlockNumber), new { id });
         }
 
         // POST: ClassCourses/UploadFile
@@ -444,7 +538,9 @@ namespace Campus_SMS.Controllers
                 string filePath = Path.Combine(courseFolderPath, fileName);
 
                 // Save the file to the disk
-                bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName);
+                // Check if file already exists for this course
+                string courseFolderName = new DirectoryInfo(courseFolderPath).Name;
+                bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
                 if (!exists)
                 {
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -460,14 +556,6 @@ namespace Campus_SMS.Controllers
 
         public async Task<IActionResult> DeleteFile(int id, string docName)
         {
-            Console.WriteLine("the file name is: ", docName);
-            var file = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == docName);
-            if (file == null)
-            {
-                Console.WriteLine("No File Found");
-                return NotFound();
-            }
-
             // Retrieve the course from the database
             var classCourse = await _context.Courses.FindAsync(id);
             if (classCourse == null)
@@ -476,11 +564,19 @@ namespace Campus_SMS.Controllers
                 return NotFound();
             }
 
-            // Get the current working directory
-            string currentDirectory = Directory.GetCurrentDirectory();
+            Console.WriteLine("[DEBUG] The file name is: ", docName);
 
-            // Define the path to store the file
+            string currentDirectory = Directory.GetCurrentDirectory();
             string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+            string courseFolderName = new DirectoryInfo(courseFolderPath).Name;
+
+            var file = await _context.OpenAIUploadedDocs
+                .FirstOrDefaultAsync(f => f.DocumentName == docName && f.CourseFolder == courseFolderName);
+            if (file == null)
+            {
+                Console.WriteLine("No File Found");
+                return NotFound();
+            }
 
             if (Directory.Exists(courseFolderPath))
             {
@@ -500,9 +596,21 @@ namespace Campus_SMS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CheckFileExists(string fileName)
+        public async Task<IActionResult> CheckFileExists(string fileName, int id)
         {
-            bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName);
+            // Retrieve the course from the database
+            var classCourse = await _context.Courses.FindAsync(id);
+            if (classCourse == null)
+            {
+                Console.WriteLine("No Class Found");
+                return NotFound();
+            }
+
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
+            string courseFolderName = new DirectoryInfo(courseFolderPath).Name;
+
+            bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
 
             return Json(new { exists });
         }

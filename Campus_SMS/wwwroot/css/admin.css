@@ -161,9 +161,18 @@ a {
         color: #FFFFFF; /* USI White */
     }
 
-/* =================== Updated Tabs Navigation =================== */
-/* New Tab Navigation for Admin Dashboard using the .tabs-nav class */
-.tabs-nav {
+/* Tabs */
+.tab {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    padding: 10px;
+    text-decoration: none;
+    color: #003366; /* USI Blue */
+}
+.tab:hover {
+    cursor: pointer;
+}
+.admin-tabs {
     display: flex;
     list-style: none;
     margin: 0;
@@ -267,7 +276,8 @@ a {
     transform: translateX(26px);
 }
 
-/* ---------------- Sidebar ---------------- */
+
+/* Sidebar */
 .sidebar {
     width: 320px;
     padding: 20px;

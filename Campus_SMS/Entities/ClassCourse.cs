@@ -24,5 +24,7 @@ namespace Campus_SMS.Entities
         public string? JoinKey { get; set; } = string.Empty;
 
         public string? AssistentId { get; set; }    
+
+        public List<string>? BlockedNumbers { get; set; }
     }
 }

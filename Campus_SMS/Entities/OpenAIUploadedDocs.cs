@@ -6,5 +6,7 @@
         public string DocumentName { get; set; }
 
         public string DocumentID { get; set; }
+
+        public string CourseFolder { get; set; }
     }
 }
