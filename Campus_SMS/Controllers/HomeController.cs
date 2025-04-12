@@ -60,7 +60,22 @@ namespace Campus_SMS.Controllers
         {
             DashboardVm vm;
 
+            //Calculate today's date
+            var today = DateTime.UtcNow.Date;
+            var sevenDaysAgo = today.AddDays(-6); // includes today, 7 total days
 
+            var responseTimesForWeek = _context.SmsInteractions
+                .Where(s => s.TimeReceived.Date >= sevenDaysAgo && s.TimeReceived.Date <= today)
+                .AsEnumerable()
+                .GroupBy(s => s.TimeReceived.Date)
+                .Select(g => new DailyResponseTime
+                {
+                    Date = g.Key,
+                    AverageResponseTimeMilliseconds = g.Average(s =>
+                        (s.TimeResponded - s.TimeReceived).TotalMilliseconds)
+                })
+                .OrderBy(result => result.Date)
+                .ToList();
 
             if (_signInManager.IsSignedIn(User))
             {
@@ -82,11 +97,11 @@ namespace Campus_SMS.Controllers
                     courseCommonWords.Add(course.Class.UsiClassIdentifier, commonWords);
                 }
 
-                vm = new DashboardVm(courseSmsCount, courseEscalationCount, courseCommonWords);
+                vm = new DashboardVm(courseSmsCount, courseEscalationCount, courseCommonWords, responseTimesForWeek);
             }
             else
             {
-                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>(), new Dictionary<string, Dictionary<string, int>>());
+                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>(), new Dictionary<string, Dictionary<string, int>>(), responseTimesForWeek);
             }
 
             return View(vm);

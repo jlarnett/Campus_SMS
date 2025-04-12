@@ -14,7 +14,6 @@ var barColors = [
 
 var keys = [];
 var smsCount = [];
-
 var escalationCount = [];
 
 //get list of Keys the user has access too
@@ -87,14 +86,18 @@ const daysOfMonth = Array.from({ length: 7 }, (_, i) => i + 1);
         
 // Example response times (in milliseconds)
 const responseTimes = Array.from({ length: 7 }, () => Math.floor(Math.random() * 500) + 100);
+const formattedLabels = dailyResponseTimes.map(item =>
+    new Date(item.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+);
+const formattedData = dailyResponseTimes.map(item => item.averageResponseTimeMilliseconds);
 
 new Chart(ctx4, {
     type: 'line',
     data: {
-        labels: daysOfMonth.map(day => `Day ${day}`),
+        labels: formattedLabels,
         datasets: [{
             label: 'Response Time (ms)',
-            data: responseTimes,
+            data: formattedData,
             borderColor: 'green',
             backgroundColor: 'rgba(0, 0, 0, 0.2)',
             borderWidth: 1,
@@ -109,7 +112,7 @@ new Chart(ctx4, {
             x: {
                 title: {
                     display: true,
-                    text: 'Day of the Month'
+                    text: ''
                 }
             },
             y: {
