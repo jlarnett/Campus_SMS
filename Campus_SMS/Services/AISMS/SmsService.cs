@@ -278,7 +278,7 @@ public class SmsService
             IncomingSmsMessage = incomingMessage,
             AiSmsResponse = aiResponse,
             TimeReceived = interactionStartTime,
-            TimeResponded = timeTwilioReceivedOurRequest ?? DateTime.UtcNow, // update this later
+            TimeResponded = timeTwilioReceivedOurRequest?.ToUniversalTime() ?? DateTime.UtcNow,
             CourseId = ID
         };
 
