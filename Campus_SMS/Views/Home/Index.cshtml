@@ -23,8 +23,8 @@
             <h2 class="text-center">Common Questions</h2>
             <canvas id="chart3"></canvas>
         </div>
-        <div class="col p-2">
-            <h2 class="text-center">Response Time</h2>
+        <div class="col p-2 h-100">
+            <h2 class="text-center ">Avg Daily Response Time</h2>
             <canvas id="chart4"></canvas>
         </div>
     </div>
@@ -36,7 +36,13 @@
     <script type="text/javascript">
         var courseSmsCountLookup = @Html.Raw(Json.Serialize(Model.CourseSmsCount)); //For javascript object
         var courseEscalationCountLookup = @Html.Raw(Json.Serialize(Model.CourseEscalationCount)); //For javascript object
+        var dailyResponseTimes = @Html.Raw(Json.Serialize(Model.DailyResponseTimes)); //For javascript object
+        var courseCommonWords = @Html.Raw(Json.Serialize(Model.CourseCommonWords)); //For javascript object
+
         console.log(courseSmsCountLookup);
+        console.log(dailyResponseTimes);
+        console.log(courseCommonWords);
+
     </script>
     <script type="text/javascript" src="~/js/AdminDashboard.js"></script>
 }
