@@ -26,34 +26,35 @@ namespace Campus_SMS.Controllers
             _signInManager = signInManager;
         }
 
-        public static Dictionary<string, int> FindCommonWords(List<string> strings)
+        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int maxPhraseLength = 3)
         {
-            // Dictionary to store word counts across all strings
-            var wordCounts = new Dictionary<string, int>();
+            var phraseCounts = new Dictionary<string, int>();
 
-            // Tokenize each string into words and update the counts
             foreach (var str in strings)
             {
-                var words = str.ToLower().Split(' ');
+                // Normalize and split the string into words
+                var words = str.ToLower()
+                    .Split(new[] { ' ', '\t', '\r', '\n', '.', ',', ';', ':', '!', '?', '-', '"', '\'' },
+                        StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (var word in words)
+                for (int i = 0; i < words.Length; i++)
                 {
-                    if (wordCounts.ContainsKey(word))
+                    for (int length = 1; length <= maxPhraseLength && i + length <= words.Length; length++)
                     {
-                        wordCounts[word]++;
-                    }
-                    else
-                    {
-                        wordCounts[word] = 1;
+                        var phrase = string.Join(" ", words.Skip(i).Take(length));
+                        if (phraseCounts.ContainsKey(phrase))
+                        {
+                            phraseCounts[phrase]++;
+                        }
+                        else
+                        {
+                            phraseCounts[phrase] = 1;
+                        }
                     }
                 }
             }
 
-            // Find the words that appear in all strings
-            var commonWords = wordCounts.Where(kvp => strings.All(s => s.ToLower().Contains(kvp.Key)))
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-            return commonWords;
+            return phraseCounts;
         }
 
         public async Task<IActionResult> Index()
@@ -93,7 +94,7 @@ namespace Campus_SMS.Controllers
                     courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
 
                     var messages = await _context.SmsInteractions.Where(p => p.CourseId.Equals(course.ClassCourseId)).Select(p => p.IncomingSmsMessage).ToListAsync();
-                    var commonWords = FindCommonWords(messages);
+                    var commonWords = FindCommonWordsAndPhrases(messages);
                     courseCommonWords.Add(course.Class.UsiClassIdentifier, commonWords);
                 }
 
