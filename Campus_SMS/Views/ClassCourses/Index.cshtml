@@ -55,7 +55,6 @@
                         <th scope="col"></th>
                         <th scope="col">@Html.DisplayNameFor(model => model.ClassDescription)</th>
                         <th scope="col">@Html.DisplayNameFor(model => model.UsiClassIdentifier)</th>
-                        <th scope="col">Upload Files</th>
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
@@ -82,26 +81,7 @@
                                 @Html.DisplayFor(modelItem => item.UsiClassIdentifier)
                             </td>
                             <td>
-                                <!-- Add file upload form -->
-                            <form asp-action="UploadFile" asp-route-id="@item.Id" method="post" enctype="multipart/form-data" onsubmit="return validateFileUpload(event, this, @item.Id);">
-                                    <div class="input-group">
-                                        <input type="file" name="file" id="fileInput-@item.Id" class="form-control" onchange="updateFileName(this, @item.Id);" hidden>
-                                        <label for="fileInput-@item.Id" class="btn btn-outline-primary">Choose File</label>
-                                        <button type="submit" class="btn btn-success" onclick="event.stopPropagation();">Upload</button>
-                                </div>
-                                <span id="fileName-@item.Id" class="form-control text-truncate">No file chosen</span>
-                                <small class="text-danger" id="fileError-@item.Id" style="display:none;">Please select a file to upload.</small>
-                                </form>
-                            </td>
-                            <td>
-                            <div class="mt-2">
-                                <!-- Toggle Button -->
-                                <button class="btn btn-outline-light mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#actions-@item.Id" aria-expanded="false" aria-controls="actions-@item.Id">
-                                    <i class="bi bi-three-dots"></i> Actions
-                                </button>
-
-                                <!-- Collapsible Actions Section -->
-                                <div class="collapse" id="actions-@item.Id">
+                                <div id="actions-@item.Id">
                                     <div class="d-flex flex-wrap gap-2">
                                         <a asp-action="ChatLog" asp-route-id="@item.Id" class="btn btn-outline-primary" onclick="event.stopPropagation();">
                                             <i class="bi bi-chat-dots me-1"></i> Chat Log
@@ -123,9 +103,6 @@
                                         </a>
                                     </div>
                                 </div>
-                            </div>
-
-
                             </td>
                         </tr>
                         <tr class="collapse accordion-collapse rounded-3 border border-2 shadow-lg hidden-row ps-3 pe-3" id="hidden-row-@uniqueIdentifier">
