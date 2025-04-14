@@ -1,0 +1,256 @@
+﻿﻿@model Campus_SMS.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+<script src="~/js/tabs.js" defer></script>
+<link href="~/css/admin.css" rel="stylesheet">
+<div class="admin-dashboard">
+    <!-- Header -->
+    <header class="admin-header">
+        <h1>Hello,@User.Identity.Name</h1>
+    </header>
+    <!-- Top Tab Navigation -->
+    <ul class="tabs-nav">
+        <li data-tab-target="#faculty" class="tab active">Faculty</li>
+        <li data-tab-target="#students" class="tab">Students</li>
+        <li data-tab-target="#courses" class="tab">Course Management</li>
+    </ul>
+
+    <!-- Tab Content Wrapper -->
+    <div class="tab-content">
+        <!-- Faculty Tab -->
+        <div id="faculty" data-tab-content class="tabDisplay admin-body active">
+            <!-- Sidebar: Faculty List -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Faculty List</h2>
+                <input type="text" placeholder="Search" class="sidebar-search" />
+                <ul class="sidebar-list">
+                    @* Loop through dynamic faculty list *@
+                    @if (Model.FacultyList != null)
+                    {
+                        foreach (var faculty in Model.FacultyList)
+                        {
+                            <li data-faculty-id="@faculty.ID">@faculty.Name</li>
+                        }
+                    }
+                </ul>
+                <button class="add-member" data-action="addFaculty">+ Add Faculty Member</button>
+            </aside>
+            <!-- Main Content: Faculty Details -->
+            <section class="main-content">
+                <div class="admin-info">
+                    @if (Model.SelectedFaculty != null)
+                    {
+                        <h2 class="admin-name">@Model.SelectedFaculty.Name</h2>
+                        <p class="admin-email">@Model.SelectedFaculty.Email</p>
+                    }
+                    else
+                    {
+                        <h2 class="admin-name">Select a Faculty</h2>
+                    }
+                </div>
+                <div class="admin-panels">
+                    <!-- Permissions Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Permissions</h3>
+                        <ul class="toggle-list">
+                            @if (Model.SelectedFaculty != null && Model.SelectedFaculty.Permissions != null)
+                            {
+                                foreach (var permission in Model.SelectedFaculty.Permissions)
+                                {
+                                    <li>
+                                        <label>
+                                            @permission.Name
+                                            <input type="checkbox" data-permission-id="@permission.ID" @(permission.IsEnabled ? "checked" : "") />
+                                        </label>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                        @* Pass the selected faculty's ID for removal *@
+                        <button class="remove-user" data-faculty-id="@Model.SelectedFaculty?.ID">Remove User</button>
+                    </div>
+                    <!-- Classes Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Classes</h3>
+                        <ul class="class-list">
+                            @if (Model.SelectedFaculty != null && Model.SelectedFaculty.Classes != null)
+                            {
+                                foreach (var classItem in Model.SelectedFaculty.Classes)
+                                {
+                                    <li data-class-id="@classItem.ID">@classItem.Name</li>
+                                }
+                            }
+                        </ul>
+                        <button class="add-class" data-faculty-id="@Model.SelectedFaculty?.ID">Add New Class</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Students Tab -->
+        <div id="students" data-tab-content class="admin-body">
+            <div class="tab-section student-tab">
+                <!-- Sidebar: Student List -->
+                <div class="sidebar student-list">
+                    <h2>Student List</h2>
+                    <input type="text" class="search-bar" placeholder="Search students..." />
+                    <ul class="list students">
+                        @if (Model.Students != null)
+                        {
+                            foreach (var student in Model.Students)
+                            {
+                                <li data-student-id="@student.ID">@student.Name (@student.ID)</li>
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <!-- Main Content: Student Details & Chat -->
+                <div class="main-content student-details">
+                    <!-- Student Information -->
+                    <div class="student-info">
+                        @if (Model.SelectedStudent != null)
+                        {
+                            <p>
+                                <strong>Phone:</strong>
+                                <span class="phone-number">@Model.SelectedStudent.Phone</span>
+                            </p>
+                            <h3>Enrolled Classes</h3>
+                            <ul class="classes">
+                                @if (Model.SelectedStudent.Classes != null)
+                                {
+                                    foreach (var cls in Model.SelectedStudent.Classes)
+                                    {
+                                        <li data-class-id="@cls.ID">
+                                            @cls.Name
+                                            <button class="btn btn-danger" data-student-id="@Model.SelectedStudent.ID" data-class-id="@cls.ID">Remove</button>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        }
+                    </div>
+
+                    <!-- Chat Section -->
+                    <div class="chat-section">
+                        <div class="chat-header">
+                            <label for="classSelect"><strong>Chat as Class:</strong></label>
+                            <select id="classSelect">
+                                <option value="">-- Select Class --</option>
+                                @if (Model.SelectedStudent != null && Model.SelectedStudent.Classes != null)
+                                {
+                                    foreach (var cls in Model.SelectedStudent.Classes)
+                                    {
+                                        <option value="@cls.Name">@cls.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="chat-log">
+                            @if (Model.ChatMessages != null)
+                            {
+                                foreach (var message in Model.ChatMessages)
+                                {
+                                    <div class="message @(message.IsUser ? "user-message" : "ai-message")">
+                                        @message.Text
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Management Tab -->
+        <div id="courses" data-tab-content class="admin-body">
+            <div class="tab-section course-tab">
+                <!-- Sidebar: Class List -->
+                <div class="sidebar class-list">
+                    <h2>Class List</h2>
+                    <input type="text" class="search-bar" placeholder="Search classes..." />
+                    <ul class="list classes">
+                        @if (Model.Classes != null)
+                        {
+                            foreach (var course in Model.Classes)
+                            {
+                                <li data-course-id="@course.ID">@course.Name</li>
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <!-- Main Content: Course Details, Analytics, & Files -->
+                <div class="main-content course-content">
+                    <div class="course-info">
+                        @if (Model.SelectedCourse != null)
+                        {
+                            <h2>Course: <span class="course-name">@Model.SelectedCourse.Name</span></h2>
+                            <p>
+                                <strong>Instructor:</strong> @Model.SelectedCourse.InstructorName
+                                (<a href="mailto:@Model.SelectedCourse.InstructorEmail">@Model.SelectedCourse.InstructorEmail</a>)
+                            </p>
+                            <p>
+                                <strong>Enrolled Students:</strong> @Model.SelectedCourse.EnrolledStudentCount
+                            </p>
+                        }
+                    </div>
+                    <div class="analytics-summary">
+                        <h3>AI Analytics Summary</h3>
+                        <div class="analytics-metrics">
+                            @if (Model.SelectedCourse?.Analytics != null)
+                            {
+                                <div class="metric">
+                                    <span class="metric-label">Response Accuracy:</span>
+                                    <span class="metric-value">@Model.SelectedCourse.Analytics.ResponseAccuracy%</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Messages Sent:</span>
+                                    <span class="metric-value">@Model.SelectedCourse.Analytics.MessagesSent</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Conversations Had:</span>
+                                    <span class="metric-value">@Model.SelectedCourse.Analytics.ConversationsHad</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="file-management">
+                        <div class="file-management-header">
+                            <h3>Files</h3>
+                            <button class="btn btn-primary btn-upload" data-course-id="@Model.SelectedCourse?.ID">
+                                Upload New File
+                            </button>
+                        </div>
+                        <table class="file-table">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.CourseFiles != null)
+                                {
+                                    foreach (var file in Model.CourseFiles)
+                                    {
+                                        <tr>
+                                            <td>@file.FileName</td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-update" data-file-id="@file.ID">Update</button>
+                                                <button class="btn btn-secondary btn-download" data-file-id="@file.ID">Download</button>
+                                                <button class="btn btn-danger btn-delete" data-file-id="@file.ID">Delete</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
