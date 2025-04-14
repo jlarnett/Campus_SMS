@@ -26,7 +26,7 @@ namespace Campus_SMS.Controllers
             _signInManager = signInManager;
         }
 
-        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int maxPhraseLength = 3)
+        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int minPhraseLength = 2, int maxPhraseLength = 3)
         {
             var phraseCounts = new Dictionary<string, int>();
 
@@ -39,7 +39,7 @@ namespace Campus_SMS.Controllers
 
                 for (int i = 0; i < words.Length; i++)
                 {
-                    for (int length = 1; length <= maxPhraseLength && i + length <= words.Length; length++)
+                    for (int length = 1; length <= maxPhraseLength && length >= minPhraseLength && i + length <= words.Length; length++)
                     {
                         var phrase = string.Join(" ", words.Skip(i).Take(length));
                         if (phraseCounts.ContainsKey(phrase))
