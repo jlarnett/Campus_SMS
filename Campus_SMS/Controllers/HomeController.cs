@@ -39,12 +39,13 @@ namespace Campus_SMS.Controllers
 
                 for (int i = 0; i < words.Length; i++)
                 {
-                    for (int length = 1; length <= maxPhraseLength && length >= minPhraseLength && i + length <= words.Length; length++)
+                    for (int length = minPhraseLength; length <= maxPhraseLength && i + length <= words.Length; length++)
                     {
                         var phrase = string.Join(" ", words.Skip(i).Take(length));
-                        if (phraseCounts.ContainsKey(phrase))
+
+                        if (phraseCounts.TryGetValue(phrase, out int value))
                         {
-                            phraseCounts[phrase]++;
+                            phraseCounts[phrase] = ++value;
                         }
                         else
                         {
@@ -54,7 +55,10 @@ namespace Campus_SMS.Controllers
                 }
             }
 
-            return phraseCounts;
+            // Only keep phrases that occur more than once
+            return phraseCounts
+                .Where(kvp => kvp.Value > 1)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public async Task<IActionResult> Index()
