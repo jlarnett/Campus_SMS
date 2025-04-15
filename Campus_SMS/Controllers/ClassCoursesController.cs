@@ -200,7 +200,7 @@ namespace Campus_SMS.Controllers
                 //Path for course documents
                 string newFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
 
-                // If does not exist make it.
+                // If documents does not exist make it.
                 if (!Directory.Exists(FolderPath))
                 {
                     Directory.CreateDirectory(FolderPath);
@@ -551,7 +551,7 @@ namespace Campus_SMS.Controllers
                 await _AiService.CreateAssistent(classCourse.JoinKey, courseFolderPath);
             }
 
-            return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
+            return RedirectToAction(nameof(Documents), new { id });  // Redirect to the index page after upload
         }
 
         public async Task<IActionResult> DeleteFile(int id, string docName)
@@ -574,25 +574,33 @@ namespace Campus_SMS.Controllers
                 .FirstOrDefaultAsync(f => f.DocumentName == docName && f.CourseFolder == courseFolderName);
             if (file == null)
             {
-                Console.WriteLine("No File Found");
-                return NotFound();
-            }
-
-            if (Directory.Exists(courseFolderPath))
-            {
-                // Generate a filename for the file
-                string fileName = Path.GetFileName(file.DocumentName);
-                string filePath = Path.Combine(courseFolderPath, fileName);
+                Console.WriteLine("No File Found in OpenAI database");
+                string fileName = Path.GetFileName(docName);
+                string filePath = Path.Combine(courseFolderPath, docName);
 
                 // Delete the file to the disk
                 if (System.IO.File.Exists(filePath))
                 {
                     System.IO.File.Delete(filePath);
-                    await _AiService.DeleteDocumentsOpenAI(file.DocumentID, classCourse.CourseDocuments, classCourse.JoinKey);
                 }
             }
+            else
+            {
+                if (Directory.Exists(courseFolderPath))
+                {
+                    // Generate a filename for the file
+                    string fileName = Path.GetFileName(file.DocumentName);
+                    string filePath = Path.Combine(courseFolderPath, fileName);
 
-            return RedirectToAction(nameof(Index));  // Redirect to the index page after upload
+                    // Delete the file to the disk
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                        await _AiService.DeleteDocumentsOpenAI(file.DocumentID, classCourse.CourseDocuments, classCourse.JoinKey);
+                    }
+                }
+            }
+            return RedirectToAction(nameof(Documents), new { id });  // Redirect to the index page after upload
         }
 
         [HttpGet]

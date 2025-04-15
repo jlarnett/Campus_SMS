@@ -217,6 +217,12 @@ public class SmsService
                             await SendSms(phoneNumber, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
                             SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
                         }
+                        else if (aiResponseStr.Trim() == "ESCALATE-REQ")
+                        {
+                            await SendSms(phoneNumber, "ESCALATE-REQ: That message has been escalated. However, for quickest response please email your professor with your question.");
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "ESCALATE-REQ: That message has been escalated. However, for quickest response please email your professor with your question.", classCourse.Id);
+
+                        }
                         else
                         {
                             await SendSms(phoneNumber, aiResponseStr);
@@ -225,10 +231,36 @@ public class SmsService
                     }
                     else
                     {
+                        if (incomingMessage.StartsWith("LEAVE "))
+                        {
+                            var parts = incomingMessage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length < 2)
+                            {
+                                await SendSms(phoneNumber, "Please specify the course to leave. Example: LEAVE Test101");
+                                SaveSmsInteraction(phoneNumber, incomingMessage, "No course provided for LEAVE command", defaultClass.Id);
+                            }
+                            else
+                            {
+                                var USIIdenifier = parts[1].Trim();
+                                var matchedCourse = user.EnrolledCourses.FirstOrDefault(c => c.StartsWith(USIIdenifier));
+                                if (matchedCourse != null)
+                                {
+                                    user.EnrolledCourses.Remove(matchedCourse);
+                                    await SendSms(phoneNumber, $"Removed from {USIIdenifier}");
+                                    SaveSmsInteraction(phoneNumber, incomingMessage, $"Removed from {USIIdenifier}", defaultClass.Id);
+                                }
+                                else
+                                {
+                                    await SendSms(phoneNumber, $"You are not enrolled in {USIIdenifier}");
+                                    SaveSmsInteraction(phoneNumber, incomingMessage, $"You are not enrolled in {USIIdenifier}", defaultClass.Id);
+                                }
+                            }
+                        }
+
                         // Handle case when the course is not found
                         if (user.EnrolledCourses.Count>0)
                         {
-                            string unassignedMessage = ("Please enter a valid join code or start asking question on a course by using a USI identifier. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
+                            string unassignedMessage = ("Please enter a valid join code or start asking question on a course by using a USI identifier. You can also leave a course by texting LEAVE followed by the USI idendifier. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
                             await SendSms(phoneNumber, unassignedMessage);
                             SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                         }

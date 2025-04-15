@@ -20,6 +20,17 @@
 
 }
 
+<!-- Add file upload form -->
+<form asp-action="UploadFile" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return validateFileUpload(event, this, @Model.Id);">
+    <div class="input-group">
+        <input type="file" name="file" id="fileInput-@Model.Id" class="form-control" onchange="updateFileName(this, @Model.Id);" hidden>
+        <label for="fileInput-@Model.Id" class="btn btn-outline-primary">Choose File</label>
+        <button type="submit" class="btn btn-success" onclick="event.stopPropagation();">Upload</button>
+    </div>
+    <span id="fileName-@Model.Id" class="form-control text-truncate">No file chosen</span>
+    <small class="text-danger" id="fileError-@Model.Id" style="display:none;">Please select a file to upload.</small>
+</form>
+
 <div class="container border border-white rounded-2 shadow-lg p-2">
     <table class="table table-striped" id="CourseDocuments">
         <thead>
@@ -55,4 +66,82 @@
 
 @section Scripts {
     <script type="text/javascript" src="~/js/CourseDocumentTableInitialize.js"></script>
+    <script>
+        let override = false;
+
+        function updateFileName(input, itemId) {
+            const fileNameSpan = document.getElementById("fileName-" + itemId);
+            fileNameSpan.textContent = input.files.length > 0 ? input.files[0].name : "No file chosen";
+        }
+
+        async function validateFileUpload(event, form, itemId) {
+            event.preventDefault()
+            const fileInput = form.querySelector("input[type='file']");
+            const fileError = form.querySelector(".text-danger");
+
+            if (!fileInput.files.length) {
+                fileError.textContent = "Please select a file to upload.";
+                fileError.style.display = "block";
+                event.preventDefault();
+                return false;
+            }
+
+            const fileName = fileInput.files[0].name;
+            console.log("Selected file:", fileName);
+            // Send AJAX request to check if file exists
+            const exists = await checkFileExists(itemId,fileName);
+
+            if (exists) {
+                if (!override)
+                {
+                    override = true;
+                    fileError.textContent = "This file already exists. Pressing upload again will overwrite it!";
+                    fileError.style.display = "block";
+                    event.preventDefault();
+                    return false;
+                }
+                else
+                {
+                    try {
+                        const response = await fetch(`/ClassCourses/DeleteFile?id=${itemId}&docName=${encodeURIComponent(fileName)}`);
+
+                        if (!response.ok) {
+                            console.log("Error: Server response was not OK.");
+                            return false;
+                        }
+
+                        console.log("Server response: Overwriting file ");
+
+                    } catch (error) {
+                        console.error("Error overwriting file:", error);
+                    }
+                }
+            }
+
+            console.log("File does not exist, proceeding with upload.");
+            fileError.style.display = "none";
+            form.submit();
+            return true;
+        }
+
+        async function checkFileExists(itemid,fileName) {
+            try {
+                const response = await fetch(`/ClassCourses/CheckFileExists?filename=${encodeURIComponent(fileName)}&id=${itemid}`);
+
+                if (!response.ok) {
+                    console.log("Error: Server response was not OK.");
+                    return false;
+                }
+
+                const data = await response.json();
+                console.log("Server response:", data);
+
+                return data.exists;
+            } catch (error) {
+                console.error("Error checking file:", error);
+                return false;
+            }
+        }
+
+    </script>
 }

@@ -299,13 +299,16 @@ namespace OpenAI.Examples
             AssistantCreationOptions assistantOptions = new()
             {
                 Name = course.UsiClassIdentifier + " Teachers Assistant",
-                Instructions = "You are a helpful assistant who answers student questions based on course documents that have been " +
-                               "uploaded by the professor. After providing each answer, end with 'Let me know if you're done asking questions?' " +
-                               "If the student replies affirmatively by saying 'yes', 'yep', 'done' or similar), " +
-                               "then in your next message respond with exactly 'D1o0N78e' and nothing else. " +
-                               "If the student replies negatively, instruct them to email their professor." +
-                               "Otherwise, continue answering further questions. Please keep your responses under 1600 characters." +
-                               "Do not include source citation.",
+                Instructions = "You are a helpful assistant who answers student questions based on course documents uploaded by the professor. " +
+                            "Keep each response under 1600 characters and do not include source citations. " +
+                            "After each answer, end with: 'Let me know if you're done asking questions?' " +
+                            "If the student replies affirmatively (e.g., 'yes', 'yep', 'done'), your next message should be exactly: D1o0N78e — nothing else. " +
+                            "If the student replies negatively, instruct them to email their professor. " +
+                            "Otherwise, continue answering their questions." +
+                            "If the student seems to be struggling, confused, or repeatedly asking about the same thing 3 times,"+
+                            "offer to escalate the question to their professor."+
+                            "If escalation is accepted, respond with: 'ESCALATE-REQ' to flag the request in the system",
+
 
                 Tools =
                         {
