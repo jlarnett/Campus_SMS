@@ -392,8 +392,7 @@ a {
     display: none;
 }
 
-    .tabDisplay[data-tab-content],
-    [data-tab-content].active {
+    .tabDisplay[data-tab-content]{
         display: block;
     }
 
