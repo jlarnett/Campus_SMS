@@ -27,6 +27,40 @@ namespace Campus_SMS.Controllers
             return View(model);
         }
 
+        // Gets JSON info for a selected faculty member
+        [HttpGet]
+        public JsonResult GetFacultyInfo(string id)
+        {
+            var faculty = _context.Users.FirstOrDefault(f => f.Id == id);
+
+            var classMapping = _context.ClassProfessorMappings
+                .Where(m => m.AppUserId == id)
+                .Select(m => m.ClassCourseId)
+                .ToList();
+
+            var classes = _context.Courses
+                .Where(c => classMapping.Contains(c.Id))
+                .Select (c => new
+                {
+                    className =c.ClassDescription,
+                    usiCode = c.UsiClassIdentifier
+                })
+                .ToList();
+
+            if (faculty == null)
+            {
+                return Json(new { error = "Can't find faculty member" });
+            }
+
+            return Json(new
+            {
+                firstName = faculty.FirstName,
+                lastName = faculty.LastName,
+                email = faculty.Email,
+                classesList = classes
+            });
+        }
+        
         public IActionResult ManageStudents()
         {
             

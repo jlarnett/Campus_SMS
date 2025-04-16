@@ -2,10 +2,19 @@
 @model AdminDashboardViewModel
 
 @{
-    ViewData["Title"] = "Admin Dashboard";
+   ViewData["Title"] = "Admin Dashboard";
 }
-<script src="~/js/tabs.js" defer></script>
+
 <link href="~/css/admin.css" rel="stylesheet">
+<!--Select2 to make the select searchable-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<!--Script that switches the displayed infomation on screen based off what tab is hit-->
+<script src="~/js/tabs.js" defer></script>
+
+
+
+<body>
 <div class="admin-dashboard">
     <!-- Header -->
     <header class="admin-header">
@@ -17,27 +26,80 @@
         <li data-tab-target="#students" class="tab">Students</li>
         <li data-tab-target="#courses" class="tab">Course Management</li>
     </ul>
-    
+    <!--example for how to add database info-->
     @{
-        @foreach (var sms in Model.SmsInteractions)
+        @foreach (var course in Model.Classes)
         {
-            <div>@sms.IncomingSmsMessage</div>
+            <div>@course.UsiClassIdentifier</div>
         }
     }
-    
-    @{
-        @foreach (var announcement in Model.Announcements)
-        {
-            <div>@announcement.OutboundMessage</div>
-        }
-    }
-    
-    @{
-        @foreach (var smsUser in Model.SmsUsers)
-        {
-            <div>@smsUser.PhoneNumber</div>
-        }
-    }
-
-
+    <!-- Tab Content Wrapper -->
+    <div class="tab-content">
+        <!-- Faculty Tab -->
+        <div id="faculty" data-tab-content class="tabDisplay admin-body">
+            <!-- Sidebar: Faculty List -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Faculty List</h2>
+                <input type="text" placeholder="Search" class="sidebar-search" />
+                <select  id="facultySelect">
+                    <option value="">-Select Faculty-</option>
+                    @if (Model.Faculty != null)
+                    {
+                        foreach (var faculty in Model.Faculty)
+                        {
+                            <option value="@faculty.Id">@faculty.FirstName @faculty.LastName</option>
+                        }
+                    }
+                </select>
+                <!--This button needs fuctionality added-->
+                <button class="add-member" data-action="addFaculty">+ Add Faculty Member</button>
+            </aside>
+            <!-- Main Content: Faculty Details -->
+            <section class="main-content">
+                <div id="facultyInfo" class="admin-info">
+                    <!--Shows the Name and Email of the selected professor, its added through the FacultyInformation.js-->
+                </div>
+                <div class="admin-panels">
+                    <!-- Permissions Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Permissions</h3>
+                        <ul class="toggle-list">
+                            <!--I need to talk to someone about adding Permissions to the faculty database and making them function-->
+                            <li></li>
+                        </ul>
+                        <!--This button needs functionality added-->
+                        <button class="remove-user" data-faculty-id="@Model.Faculty">Remove User</button>
+                    </div>
+                    <!-- Classes Panel -->
+                    <div class="admin-panel">
+                        <h3 class="panel-title">Classes</h3>
+                        <ul id="facultyCourse" class="class-list">
+                            <!--adds a list of courses for selected faculty from the JS-->
+                        </ul>
+                        <!--This button needs fuctionality-->
+                        <button class="add-class" data-faculty-id="@Model.Faculty">Add New Class</button>
+                    </div>
+                </div>
+            </section>
+        </div>
 </div>
+</div>
+</body>
+<!--Keep this at the bottom-->
+@section Scripts{
+    <!--Scripts for Select 2-->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!--Script that makes it show the selected faculty's' information-->
+    <script src="~/js/FacultyInformation.js" defer></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#facultySelect').select2({
+                placeholder: "-- Select Faculty --",
+                allowClear: true,
+                width: 'resolve'
+            });
+        });
+    </script>
+}
