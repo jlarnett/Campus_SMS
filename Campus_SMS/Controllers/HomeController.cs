@@ -69,17 +69,29 @@ namespace Campus_SMS.Controllers
             var today = DateTime.UtcNow.Date;
             var sevenDaysAgo = today.AddDays(-6); // includes today, 7 total days
 
-            var responseTimesForWeek = _context.SmsInteractions
+            // Generate list of all dates between sevenDaysAgo and today (inclusive)
+            var allDates = Enumerable.Range(0, (today - sevenDaysAgo).Days + 1)
+                .Select(offset => sevenDaysAgo.AddDays(offset).Date)
+                .ToList();
+
+            // Get interaction data and group by date
+            var groupedResponseTimes = _context.SmsInteractions
                 .Where(s => s.TimeReceived.Date >= sevenDaysAgo && s.TimeReceived.Date <= today)
                 .AsEnumerable()
                 .GroupBy(s => s.TimeReceived.Date)
-                .Select(g => new DailyResponseTime
+                .ToDictionary(g => g.Key, g => g.Average(s =>
+                    (s.TimeResponded - s.TimeReceived).TotalMilliseconds));
+
+            // Build the final list with defaults for missing days
+            var responseTimesForWeek = allDates
+                .Select(date => new DailyResponseTime
                 {
-                    Date = g.Key,
-                    AverageResponseTimeMilliseconds = g.Average(s =>
-                        (s.TimeResponded - s.TimeReceived).TotalMilliseconds)
+                    Date = date,
+                    AverageResponseTimeMilliseconds = groupedResponseTimes.TryGetValue(date, out var avg)
+                        ? avg
+                        : 0
                 })
-                .OrderBy(result => result.Date)
+                .OrderBy(r => r.Date)
                 .ToList();
 
             if (_signInManager.IsSignedIn(User))
@@ -93,7 +105,9 @@ namespace Campus_SMS.Controllers
                 {
                     var count = await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId)).CountAsync();
                     var escalationCount =
-                        await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId) && s.IncomingSmsMessage.Contains("escalate")).CountAsync();
+                        await _context.SmsInteractions
+                            .Where(s => s.CourseId.Equals(course.ClassCourseId) && (s.IncomingSmsMessage.Contains("ESCALATE-REQ")  || s.AiSmsResponse.Contains("ESCALATE-REQ")))
+                            .CountAsync();
                     courseSmsCount.Add(course.Class.UsiClassIdentifier, count);
                     courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
 

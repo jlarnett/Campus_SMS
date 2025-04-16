@@ -94,8 +94,6 @@ function generateChartDataFromPhraseMap(input) {
 
 const chartData = generateChartDataFromPhraseMap(courseCommonWords);
 
-new Chart(document.getElementById('ctx3'))
-
 new Chart(ctx3, {
     type: 'doughnut',
     data: chartData,
