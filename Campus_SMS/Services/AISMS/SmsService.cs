@@ -16,6 +16,9 @@ public class SmsService
     private readonly AiServiceVectorStore _aiService;
     private readonly ILogger _logger;
 
+    private DateTime interactionStartTime;
+    private DateTime? timeTwilioReceivedOurRequest;
+
 
     public SmsService(ApplicationDbContext context, IConfiguration configuration, AiServiceVectorStore aiService, ILogger<SmsService> logger)
     {
@@ -31,8 +34,9 @@ public class SmsService
     }
 
     
-    public async Task ProcessIncomingMessageAsync(string incomingMessage, string phoneNumber)
+    public async Task ProcessIncomingMessageAsync(string incomingMessage, string phoneNumber, DateTime interactionStartTime)
     {
+        this.interactionStartTime = interactionStartTime;
         // Initial syllabus text
         string syllabusText = "";
 
@@ -50,7 +54,7 @@ public class SmsService
                 CourseDocuments = "Documents/Default"
             };
             _context.Courses.Add(defaultClass);
-            _context.SaveChanges(); // Now defaultClass.Id will have a valid value
+            await _context.SaveChangesAsync(); // Now defaultClass.Id will have a valid value
         }
         
 
@@ -58,8 +62,8 @@ public class SmsService
         {
             // First-time texter - send welcome message and prompt to opt-in
             string welcomeMessage = "Hello, I am an AI-assisted messaging system that helps in your course related questions. To begin receiving messages, reply with 'BEGIN'. At any time you may reply 'QUIT' to opt-out and stop receiving messages.";
-            SaveSmsInteraction(phoneNumber, incomingMessage, welcomeMessage, defaultClass.Id);
             await SendSms(phoneNumber, welcomeMessage);
+            SaveSmsInteraction(phoneNumber, incomingMessage, welcomeMessage, defaultClass.Id);
 
             // Create a new user record and mark as first-time
             user = new SMSUser
@@ -84,8 +88,8 @@ public class SmsService
                     user.OptStatus = true;
                     await _context.SaveChangesAsync();
                     string optInMessage = "You have successfully opted in! You will now be able to receive course-related messages. Start by adding a join key given to you by your instructor.";
-                    SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     await SendSms(phoneNumber, optInMessage);
+                    SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     return;
                 }
                 else if (incomingMessage.Trim().ToUpper() == "QUIT")
@@ -94,8 +98,8 @@ public class SmsService
                     user.OptStatus = false;
                     await _context.SaveChangesAsync();
                     string optInMessage = "You have successfully opted out! You will no longer be able to receive course-related messages.";
-                    SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     await SendSms(phoneNumber, optInMessage);
+                    SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     return;
                 }
 
@@ -142,8 +146,8 @@ public class SmsService
                         else
                         {
                             user.EnrolledCourses.Remove(course);
-                            SaveSmsInteraction(phoneNumber, incomingMessage, "You have been removed from, " + course+", because the course no longer exists.", defaultClass.Id);
                             await SendSms(phoneNumber, "You have been removed from, " + course + ", due to either removal from course or course no longer exists.");
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "You have been removed from, " + course+", because the course no longer exists.", defaultClass.Id);
                             classCourse = null;
                         }
                     }
@@ -197,8 +201,8 @@ public class SmsService
                             if (classCourse.BlockedNumbers.Contains(user.PhoneNumber)) 
                             {
                                 user.CurrentCourse = null;
-                                SaveSmsInteraction(phoneNumber, incomingMessage, "Blocked from messaging, " + classCourse.UsiClassIdentifier + ". If you think this is a mistake, please contact your instructor.", defaultClass.Id);
                                 await SendSms(phoneNumber, "Blocked from messaging, " + classCourse.UsiClassIdentifier + ". If you think this is a mistake, please contact your instructor.");
+                                SaveSmsInteraction(phoneNumber, incomingMessage, "Blocked from messaging, " + classCourse.UsiClassIdentifier + ". If you think this is a mistake, please contact your instructor.", defaultClass.Id);
                                 return;
                             }
                         }
@@ -210,30 +214,61 @@ public class SmsService
                         {
                             user.CurrentCourse = null;
                             await _context.SaveChangesAsync();
-                            SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
                             await SendSms(phoneNumber, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
+                        }
+                        else if (aiResponseStr.Trim() == "ESCALATE-REQ")
+                        {
+                            await SendSms(phoneNumber, "ESCALATE-REQ: That message has been escalated. However, for quickest response please email your professor with your question.");
+                            SaveSmsInteraction(phoneNumber, incomingMessage, "ESCALATE-REQ: That message has been escalated. However, for quickest response please email your professor with your question.", classCourse.Id);
 
                         }
                         else
                         {
-                            SaveSmsInteraction(phoneNumber, incomingMessage, aiResponseStr, classCourse.Id);
                             await SendSms(phoneNumber, aiResponseStr);
+                            SaveSmsInteraction(phoneNumber, incomingMessage, aiResponseStr, classCourse.Id);
                         }
                     }
                     else
                     {
+                        if (incomingMessage.StartsWith("LEAVE "))
+                        {
+                            var parts = incomingMessage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length < 2)
+                            {
+                                await SendSms(phoneNumber, "Please specify the course to leave. Example: LEAVE Test101");
+                                SaveSmsInteraction(phoneNumber, incomingMessage, "No course provided for LEAVE command", defaultClass.Id);
+                            }
+                            else
+                            {
+                                var USIIdenifier = parts[1].Trim();
+                                var matchedCourse = user.EnrolledCourses.FirstOrDefault(c => c.StartsWith(USIIdenifier));
+                                if (matchedCourse != null)
+                                {
+                                    user.EnrolledCourses.Remove(matchedCourse);
+                                    await SendSms(phoneNumber, $"Removed from {USIIdenifier}");
+                                    SaveSmsInteraction(phoneNumber, incomingMessage, $"Removed from {USIIdenifier}", defaultClass.Id);
+                                }
+                                else
+                                {
+                                    await SendSms(phoneNumber, $"You are not enrolled in {USIIdenifier}");
+                                    SaveSmsInteraction(phoneNumber, incomingMessage, $"You are not enrolled in {USIIdenifier}", defaultClass.Id);
+                                }
+                            }
+                        }
+
                         // Handle case when the course is not found
                         if (user.EnrolledCourses.Count>0)
                         {
-                            string unassignedMessage = ("Please enter a valid join code or start asking question on a course by using a USI identifier. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
-                            SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
+                            string unassignedMessage = ("Please enter a valid join code or start asking question on a course by using a USI identifier. You can also leave a course by texting LEAVE followed by the USI idendifier. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
                             await SendSms(phoneNumber, unassignedMessage);
+                            SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                         }
                         else
                         {
                             string unassignedMessage = ("Please enter a valid join code or USI identifier.");
-                            SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                             await SendSms(phoneNumber, unassignedMessage);
+                            SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                         }
                     }
                 }
@@ -242,8 +277,8 @@ public class SmsService
             {
                 // If user hasn't opted in, only send the opt-in prompt
                 string optInMessage = "Please reply with 'BEGIN' to begin receiving course-related messages.";
-                SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                 await SendSms(phoneNumber, optInMessage);
+                SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
             }
         }
     }
@@ -253,10 +288,12 @@ public class SmsService
     {
         try
         {
-            var messageSent = MessageResource.Create(
+            var messageSent = await MessageResource.CreateAsync(
                 to: new PhoneNumber(toPhoneNumber),
                 from: new PhoneNumber(_fromPhoneNumber),
                 body: message);
+
+            this.timeTwilioReceivedOurRequest = messageSent.DateUpdated;
         }
         catch (ApiException e)
         {
@@ -272,8 +309,8 @@ public class SmsService
             PhoneNumber = phoneNumber,
             IncomingSmsMessage = incomingMessage,
             AiSmsResponse = aiResponse,
-            TimeReceived = DateTime.Now,
-            TimeResponded = DateTime.Now, // update this later
+            TimeReceived = interactionStartTime,
+            TimeResponded = timeTwilioReceivedOurRequest?.ToUniversalTime() ?? DateTime.UtcNow,
             CourseId = ID
         };
 

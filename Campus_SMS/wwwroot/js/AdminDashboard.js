@@ -14,7 +14,6 @@ var barColors = [
 
 var keys = [];
 var smsCount = [];
-
 var escalationCount = [];
 
 //get list of Keys the user has access too
@@ -67,19 +66,37 @@ new Chart(ctx2, {
     }
 });
 
+function generateChartDataFromPhraseMap(input) {
+  // Step 1: Extract all unique phrases
+  const allPhrases = Array.from(
+    new Set(Object.values(input).flatMap(obj => Object.keys(obj)))
+  );
+
+  // Step 2: Define a color palette
+  const colorPalette = [
+    '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#c9cbcf',
+    '#ff9f40', '#6e6eff', '#00cc99', '#ff66cc'
+  ];
+
+  // Step 3: Build datasets dynamically
+  const datasets = Object.entries(input).map(([label, phraseMap], index) => ({
+    label,
+    data: allPhrases.map(phrase => phraseMap[phrase] || 0),
+    backgroundColor: allPhrases.map((_, i) => colorPalette[i % colorPalette.length])
+  }));
+
+  // Step 4: Return Chart.js data object
+  return {
+    labels: allPhrases,
+    datasets
+  };
+}
+
+const chartData = generateChartDataFromPhraseMap(courseCommonWords);
+
 new Chart(ctx3, {
     type: 'doughnut',
-    data: {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-    datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-    }]
-    },
-    options: {
-        responsive: true
-    }
+    data: chartData,
 });
 
 // Generate days of the month (1 - 31)
@@ -87,14 +104,18 @@ const daysOfMonth = Array.from({ length: 7 }, (_, i) => i + 1);
         
 // Example response times (in milliseconds)
 const responseTimes = Array.from({ length: 7 }, () => Math.floor(Math.random() * 500) + 100);
+const formattedLabels = dailyResponseTimes.map(item =>
+    new Date(item.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+);
+const formattedData = dailyResponseTimes.map(item => item.averageResponseTimeMilliseconds);
 
 new Chart(ctx4, {
     type: 'line',
     data: {
-        labels: daysOfMonth.map(day => `Day ${day}`),
+        labels: formattedLabels,
         datasets: [{
             label: 'Response Time (ms)',
-            data: responseTimes,
+            data: formattedData,
             borderColor: 'green',
             backgroundColor: 'rgba(0, 0, 0, 0.2)',
             borderWidth: 1,
@@ -109,7 +130,7 @@ new Chart(ctx4, {
             x: {
                 title: {
                     display: true,
-                    text: 'Day of the Month'
+                    text: ''
                 }
             },
             y: {

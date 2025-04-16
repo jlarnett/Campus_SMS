@@ -23,10 +23,11 @@ namespace Campus_SMS.Controllers
         [HttpPost("incoming")]
         public async Task<IActionResult> IncomingSms([FromForm] string From, [FromForm] string Body)
         {
+            var interactionStartTime = DateTime.UtcNow;
             try
             {
                 // Process the incoming message
-                await _smsService.ProcessIncomingMessageAsync(Body, From);
+                await _smsService.ProcessIncomingMessageAsync(Body, From, interactionStartTime);
 
                 // Return the TwiML response (Twilio expects this)
                 return Ok();

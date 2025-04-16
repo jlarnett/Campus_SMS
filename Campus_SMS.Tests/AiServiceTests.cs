@@ -151,9 +151,9 @@ namespace OpenAI.Tests
 
             string phoneNumber = "+18127607508";
             string studentMessage = "Hello";
-
+            var interactionStartTime = DateTime.UtcNow;
             // Act
-            await smsService.ProcessIncomingMessageAsync(studentMessage, phoneNumber);
+            await smsService.ProcessIncomingMessageAsync(studentMessage, phoneNumber, interactionStartTime);
 
             // Assert
             var message = dbContext.SmsInteractions.FirstOrDefault(m => m.PhoneNumber == "+18127607508");

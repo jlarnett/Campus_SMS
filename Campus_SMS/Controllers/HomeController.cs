@@ -26,41 +26,73 @@ namespace Campus_SMS.Controllers
             _signInManager = signInManager;
         }
 
-        public static Dictionary<string, int> FindCommonWords(List<string> strings)
+        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int minPhraseLength = 2, int maxPhraseLength = 3)
         {
-            // Dictionary to store word counts across all strings
-            var wordCounts = new Dictionary<string, int>();
+            var phraseCounts = new Dictionary<string, int>();
 
-            // Tokenize each string into words and update the counts
             foreach (var str in strings)
             {
-                var words = str.ToLower().Split(' ');
+                // Normalize and split the string into words
+                var words = str.ToLower()
+                    .Split(new[] { ' ', '\t', '\r', '\n', '.', ',', ';', ':', '!', '?', '-', '"', '\'' },
+                        StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (var word in words)
+                for (int i = 0; i < words.Length; i++)
                 {
-                    if (wordCounts.ContainsKey(word))
+                    for (int length = minPhraseLength; length <= maxPhraseLength && i + length <= words.Length; length++)
                     {
-                        wordCounts[word]++;
-                    }
-                    else
-                    {
-                        wordCounts[word] = 1;
+                        var phrase = string.Join(" ", words.Skip(i).Take(length));
+
+                        if (phraseCounts.TryGetValue(phrase, out int value))
+                        {
+                            phraseCounts[phrase] = ++value;
+                        }
+                        else
+                        {
+                            phraseCounts[phrase] = 1;
+                        }
                     }
                 }
             }
 
-            // Find the words that appear in all strings
-            var commonWords = wordCounts.Where(kvp => strings.All(s => s.ToLower().Contains(kvp.Key)))
+            // Only keep phrases that occur more than once
+            return phraseCounts
+                .Where(kvp => kvp.Value > 1)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-            return commonWords;
         }
 
         public async Task<IActionResult> Index()
         {
             DashboardVm vm;
 
+            //Calculate today's date
+            var today = DateTime.UtcNow.Date;
+            var sevenDaysAgo = today.AddDays(-6); // includes today, 7 total days
 
+            // Generate list of all dates between sevenDaysAgo and today (inclusive)
+            var allDates = Enumerable.Range(0, (today - sevenDaysAgo).Days + 1)
+                .Select(offset => sevenDaysAgo.AddDays(offset).Date)
+                .ToList();
+
+            // Get interaction data and group by date
+            var groupedResponseTimes = _context.SmsInteractions
+                .Where(s => s.TimeReceived.Date >= sevenDaysAgo && s.TimeReceived.Date <= today)
+                .AsEnumerable()
+                .GroupBy(s => s.TimeReceived.Date)
+                .ToDictionary(g => g.Key, g => g.Average(s =>
+                    (s.TimeResponded - s.TimeReceived).TotalMilliseconds));
+
+            // Build the final list with defaults for missing days
+            var responseTimesForWeek = allDates
+                .Select(date => new DailyResponseTime
+                {
+                    Date = date,
+                    AverageResponseTimeMilliseconds = groupedResponseTimes.TryGetValue(date, out var avg)
+                        ? avg
+                        : 0
+                })
+                .OrderBy(r => r.Date)
+                .ToList();
 
             if (_signInManager.IsSignedIn(User))
             {
@@ -73,20 +105,22 @@ namespace Campus_SMS.Controllers
                 {
                     var count = await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId)).CountAsync();
                     var escalationCount =
-                        await _context.SmsInteractions.Where(s => s.CourseId.Equals(course.ClassCourseId) && s.IncomingSmsMessage.Contains("escalate")).CountAsync();
+                        await _context.SmsInteractions
+                            .Where(s => s.CourseId.Equals(course.ClassCourseId) && (s.IncomingSmsMessage.Contains("ESCALATE-REQ")  || s.AiSmsResponse.Contains("ESCALATE-REQ")))
+                            .CountAsync();
                     courseSmsCount.Add(course.Class.UsiClassIdentifier, count);
                     courseEscalationCount.Add(course.Class.UsiClassIdentifier, escalationCount);
 
                     var messages = await _context.SmsInteractions.Where(p => p.CourseId.Equals(course.ClassCourseId)).Select(p => p.IncomingSmsMessage).ToListAsync();
-                    var commonWords = FindCommonWords(messages);
+                    var commonWords = FindCommonWordsAndPhrases(messages);
                     courseCommonWords.Add(course.Class.UsiClassIdentifier, commonWords);
                 }
 
-                vm = new DashboardVm(courseSmsCount, courseEscalationCount, courseCommonWords);
+                vm = new DashboardVm(courseSmsCount, courseEscalationCount, courseCommonWords, responseTimesForWeek);
             }
             else
             {
-                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>(), new Dictionary<string, Dictionary<string, int>>());
+                vm = new DashboardVm(new Dictionary<string, int>(), new Dictionary<string, int>(), new Dictionary<string, Dictionary<string, int>>(), responseTimesForWeek);
             }
 
             return View(vm);
