@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Campus_SMS.Areas.Identity.Pages.Account
 {
@@ -24,20 +25,17 @@ namespace Campus_SMS.Areas.Identity.Pages.Account
             _logger = logger;
         }
 
-        public async Task<IActionResult> OnPost(string returnUrl = null)
+        public IActionResult OnPost(string returnUrl = null)
         {
-            await _signInManager.SignOutAsync();
-            _logger.LogInformation("User logged out.");
-            if (returnUrl != null)
-            {
-                return LocalRedirect(returnUrl);
-            }
-            else
-            {
-                // This needs to be a redirect so that the browser performs a new
-                // request and the identity for the user gets updated.
-                return RedirectToPage();
-            }
+            var domain = "dev-7aktrm4prqivmcb1.us.auth0.com";
+            var clientId = "Yh6n7TYtyRiF8BcqugDt2K4K5LFR4SCQ";
+            var returnTo = Url.Page("/Index", null, null, Request.Scheme);
+
+            var logoutUrl = $"https://{domain}/v2/logout?client_id={clientId}&returnTo={Uri.EscapeDataString(returnTo)}";
+
+            return SignOut(new AuthenticationProperties { RedirectUri = logoutUrl },
+                IdentityConstants.ApplicationScheme,
+                "Auth0");
         }
     }
 }
