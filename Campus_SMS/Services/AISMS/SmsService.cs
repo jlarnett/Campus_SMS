@@ -87,7 +87,7 @@ public class SmsService
                     // Update opt-in status
                     user.OptStatus = true;
                     await _context.SaveChangesAsync();
-                    string optInMessage = "You have successfully opted in! You will now be able to receive course-related messages. Start by adding a join key given to you by your instructor.";
+                    string optInMessage = "You have successfully opted in! You will now be able to receive course-related messages. Start by adding a join code given to you by your instructor.";
                     await SendSms(phoneNumber, optInMessage);
                     SaveSmsInteraction(phoneNumber, incomingMessage, optInMessage, defaultClass.Id);
                     return;
@@ -146,7 +146,7 @@ public class SmsService
                         else
                         {
                             user.EnrolledCourses.Remove(course);
-                            await SendSms(phoneNumber, "You have been removed from, " + course + ", due to either removal from course or course no longer exists.");
+                            await SendSms(phoneNumber, "You have been removed from, " + course + ", because the course no longer exists.");
                             SaveSmsInteraction(phoneNumber, incomingMessage, "You have been removed from, " + course+", because the course no longer exists.", defaultClass.Id);
                             classCourse = null;
                         }
@@ -214,7 +214,7 @@ public class SmsService
                         {
                             user.CurrentCourse = null;
                             await _context.SaveChangesAsync();
-                            await SendSms(phoneNumber, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
+                            await SendSms(phoneNumber, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". To join a course, enter a valid join code.\r\nTo ask a question, first text the course’s USI ID and wait for a reply from the AI assistant.\r\nTo leave, text LEAVE followed by the USI ID.\r\nYou're enrolled in:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
                             SaveSmsInteraction(phoneNumber, incomingMessage, "Exiting questioning for, " + classCourse.UsiClassIdentifier + ". Please enter a new USI identifier or enter a join code. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])), classCourse.Id);
                         }
                         else if (aiResponseStr.Trim() == "ESCALATE-REQ")
@@ -260,13 +260,13 @@ public class SmsService
                         // Handle case when the course is not found
                         if (user.EnrolledCourses.Count>0)
                         {
-                            string unassignedMessage = ("Please enter a valid join code or start asking question on a course by using a USI identifier. You can also leave a course by texting LEAVE followed by the USI idendifier. Currently enrolled class's USI identifiers include:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
+                            string unassignedMessage = ("To join a course, enter a valid join code.\r\nTo ask a question, first text the course’s USI ID and wait for a reply from the AI assistant.\r\nTo leave, text LEAVE followed by the USI ID.\r\nYou're enrolled in:\n" + string.Join("\n", user.EnrolledCourses.Select(course => course[..^5])));
                             await SendSms(phoneNumber, unassignedMessage);
                             SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                         }
                         else
                         {
-                            string unassignedMessage = ("Please enter a valid join code or USI identifier.");
+                            string unassignedMessage = ("Please enter a valid join code to join a course.");
                             await SendSms(phoneNumber, unassignedMessage);
                             SaveSmsInteraction(phoneNumber, incomingMessage, unassignedMessage, defaultClass.Id);
                         }
