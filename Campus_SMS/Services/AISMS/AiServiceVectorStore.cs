@@ -138,19 +138,21 @@ namespace OpenAI.Examples
             Console.WriteLine($"[DEBUG] Creating thread with student's message: {studentMessage}");
 
             var stringBuilder = new StringBuilder();
+            stringBuilder.AppendLine("Chat history:\n");
             foreach (var interaction in chatHistory)
             {
                 stringBuilder.AppendLine($"Role: User, Message: {interaction.IncomingSmsMessage};");
                 stringBuilder.AppendLine($"Role: System, Message: {interaction.AiSmsResponse};");
             }
-
-            stringBuilder.AppendLine($"Role: User, Message: {studentMessage} Use documents provided.;");
+            stringBuilder.AppendLine("New Message:\n");
+            stringBuilder.AppendLine(studentMessage);
 
             ThreadCreationOptions threadOptions = new()
             {
                 InitialMessages = { stringBuilder.ToString() },
             };
 
+            Console.WriteLine($"[DEBUG] {stringBuilder.ToString()}");
             ThreadRun threadRun = null; // Declare threadRun outside try-catch
 
             try
@@ -336,11 +338,11 @@ namespace OpenAI.Examples
                             "Keep each response under 1600 characters and do not include source citations. " +
                             "After each answer, end with: 'Let me know if you're done asking questions?' " +
                             "If the student replies affirmatively (e.g., 'yes', 'yep', 'done'), your next message should be exactly: D1o0N78e — nothing else. " +
-                            "If the student replies negatively, instruct them to email their professor. " +
-                            "Otherwise, continue answering their questions." +
-                            "If message is a course code (e.g., ENG101, CIS201, ECON 375) Simply reply you are ready to ansewer question on that course"+
-                            "If the student seems to be struggling, confused, or repeatedly asking about the same thing 3 times,"+
-                            "offer to escalate the question to their professor."+
+
+                            "Otherwise, continue answering their questions. " +
+                            "If message is a course code (e.g., ENG101, CIS201, ECON 375) Simply reply you are ready to answer question on that course. " +
+                            "If the student seems to be struggling, confused, or repeatedly asking about the same thing 3 times, "+
+                            "offer to escalate the question to their professor. "+
                             "If escalation is accepted, respond with: 'ESCALATE-REQ' to flag the request in the system",
 
 
