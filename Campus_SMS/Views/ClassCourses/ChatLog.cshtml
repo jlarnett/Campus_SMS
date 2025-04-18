@@ -24,7 +24,7 @@
                 <button class="btn btn-link text-start flex-grow-1" data-bs-toggle="collapse" data-bs-target="#chat-@group.Key.GetHashCode()">
                     @FormatPhoneNumber(group.Key) — First Message: @group.Value.FirstOrDefault()?.IncomingSmsMessage
                 </button>
-                @if (!Model.Class.BlockedNumbers.Contains(group.Key))
+                @if (!(Model.Class.BlockedNumbers ?? new List<string>()).Contains(group.Key))
                 {
                     <form asp-action="AddBlockedNumber"
                     asp-route-id="@Model.Class.Id"
