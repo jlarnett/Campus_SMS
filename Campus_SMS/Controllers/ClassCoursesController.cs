@@ -483,6 +483,13 @@ namespace Campus_SMS.Controllers
             }
             await _context.SaveChangesAsync();
 
+            var referer = Request.Headers["Referer"].ToString();
+
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
+        
             return RedirectToAction(nameof(BlockNumber), new { id });
         }
 
@@ -500,10 +507,26 @@ namespace Campus_SMS.Controllers
             {
                 classCourse.BlockedNumbers = [];
             }
+            Console.WriteLine("PHONENUMBER: " + phoneNumber);
 
-            classCourse.BlockedNumbers.Add("+"+phoneNumber);
-            
+            if (!phoneNumber.Contains("+"))
+            {
+                Console.WriteLine(" phone number does not contain +");
+                classCourse.BlockedNumbers.Add("+" + phoneNumber);
+            }
+            else
+            {
+                classCourse.BlockedNumbers.Add(phoneNumber);
+            }
+
             await _context.SaveChangesAsync();
+
+            var referer = Request.Headers["Referer"].ToString();
+
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
 
             return RedirectToAction(nameof(BlockNumber), new { id });
         }
@@ -531,6 +554,11 @@ namespace Campus_SMS.Controllers
             // Define the path to store the file
             string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
 
+            if (!Directory.Exists(courseFolderPath))
+            {
+                System.IO.Directory.CreateDirectory(courseFolderPath);
+            }
+
             if (Directory.Exists(courseFolderPath))
             {
                 // Generate a filename for the file
@@ -540,9 +568,20 @@ namespace Campus_SMS.Controllers
                 // Save the file to the disk
                 // Check if file already exists for this course
                 string courseFolderName = new DirectoryInfo(courseFolderPath).Name;
-                bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
-                if (!exists)
+                var uploadedFile = await _context.OpenAIUploadedDocs.FirstOrDefaultAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
+                
+                if (uploadedFile == null)
                 {
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                }
+                //workaround for if file exists in database but not in folder
+                else
+                {
+                    await _AiService.DeleteDocumentsOpenAI(uploadedFile.DocumentID, classCourse.CourseDocuments, classCourse.JoinKey);
+
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
@@ -617,9 +656,14 @@ namespace Campus_SMS.Controllers
             string currentDirectory = Directory.GetCurrentDirectory();
             string courseFolderPath = Path.Combine(currentDirectory, classCourse.CourseDocuments);
             string courseFolderName = new DirectoryInfo(courseFolderPath).Name;
+            Console.WriteLine($"{courseFolderPath}/{fileName}");
+            bool exists = false;
+            if (System.IO.File.Exists(Path.Combine(courseFolderPath, fileName)))
+            {
+                exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
 
-            bool exists = await _context.OpenAIUploadedDocs.AnyAsync(d => d.DocumentName == fileName && d.CourseFolder == courseFolderName);
-
+            }
+            
             return Json(new { exists });
         }
 

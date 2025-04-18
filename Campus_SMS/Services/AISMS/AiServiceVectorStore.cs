@@ -2,9 +2,11 @@
 using Campus_SMS.Entities;
 using OpenAI.Assistants;
 using OpenAI.Files;
+using OpenAI.VectorStores;
 using System.ClientModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using Twilio.TwiML.Voice;
 
 
 
@@ -29,13 +31,18 @@ namespace OpenAI.Examples
             OpenAIClient openAIClient = new(_apiKey);
             OpenAIFileClient fileClient = openAIClient.GetOpenAIFileClient();
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
+            var vectorStoreClient = openAIClient.GetVectorStoreClient();
 
             string directoryPath = syllabusPath;
             Console.WriteLine($"[DEBUG] Directory Path: {directoryPath}");
-            List<string> fileIds = new();
             OpenAIFile file = null;
 
             bool newFileExists = false;
+
+            if (!Directory.Exists(directoryPath))
+            {
+                System.IO.Directory.CreateDirectory(directoryPath);
+            }
             // Upload files (or reuse existing ones) for vector store creation
             foreach (string filePath in Directory.GetFiles(directoryPath))
             {
@@ -43,47 +50,9 @@ namespace OpenAI.Examples
                 Console.WriteLine($"[DEBUG] Checking file: {fileName} (Full Path: {filePath})");
 
                 // Use only the file name for DB checks
-                bool fileExists = _context.OpenAIUploadedDocs.Any(f => f.DocumentName == fileName);
-                Console.WriteLine($"[DEBUG] File exists in DB? {fileExists}");
-
-                if (!fileExists)
-                {
-                    newFileExists = true;
-                    Console.WriteLine($"[DEBUG] Uploading file: {fileName}...");
-                    using FileStream fileStream = File.OpenRead(filePath);
-                    file = await fileClient.UploadFileAsync(fileStream, fileName, FileUploadPurpose.Assistants);
-                    Console.WriteLine($"[DEBUG] Uploaded File ID: {file.Id}");
-
-                    var document = new OpenAIUploadedDocs
-                    {
-                        DocumentName = fileName,  // store only file name
-                        DocumentID = file.Id
-                    };
-                    _context.OpenAIUploadedDocs.Add(document);
-                    await _context.SaveChangesAsync();
-                    Console.WriteLine($"[DEBUG] Stored {fileName} in DB with ID: {file.Id}");
-                    fileIds.Add(file.Id);
-                }
-                else
-                {
-                    Console.WriteLine($"[DEBUG] File already exists in database: {fileName}. Retrieving existing file ID.");
-                    var existingDoc = _context.OpenAIUploadedDocs.FirstOrDefault(f => f.DocumentName == fileName);
-                    if (existingDoc != null)
-                    {
-                        Console.WriteLine($"[DEBUG] Existing File ID for {fileName}: {existingDoc.DocumentID}");
-                        fileIds.Add(existingDoc.DocumentID);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[ERROR] File {fileName} exists in DB but could not retrieve its ID.");
-                    }
-                }
-            }
-
-            Console.WriteLine($"[DEBUG] Total file IDs for vector store: {fileIds.Count}");
-            foreach (var id in fileIds)
-            {
-                Console.WriteLine($"[DEBUG] File ID: {id}");
+                newFileExists = !_context.OpenAIUploadedDocs.Any(f => f.DocumentName == fileName && f.CourseFolder == courseKey);
+                Console.WriteLine($"[DEBUG] New File exists? {newFileExists}");
+                break;
             }
 
             var course = _context.Courses.FirstOrDefault(c => c.JoinKey == courseKey);
@@ -94,11 +63,41 @@ namespace OpenAI.Examples
                 if (newFileExists)
                 {
                     Console.WriteLine("[DEBUG] New files detected. Recreating assistant...");
-                    // Optionally delete the old assistant if desired:
+                    // delete the old assistan
                     try
                     {
                         Console.WriteLine("[DEBUG] Deleting old assistant");
+
+                        OpenAI.Assistants.Assistant assit = assistantClient.GetAssistant(course.AssistentId);
+                        var vectorIds = assit.ToolResources
+                                    .FileSearch
+                                    .VectorStoreIds;
+
+                        // get the first (and in my case only) store ID:
+                        string vectorStoreId = vectorIds.FirstOrDefault();
+                        if (vectorStoreId == null)
+                        {
+                            vectorStoreId = "vs-default";
+                        }
+
                         await assistantClient.DeleteAssistantAsync(course.AssistentId);
+                        //Delete the vector store
+                        try
+                        {
+                            Console.WriteLine($"[DEBUG] Deleting vector store {vectorStoreId}.");
+                            await vectorStoreClient.DeleteVectorStoreAsync(vectorStoreId);
+                            Console.WriteLine($"[DEBUG] Successfully deleted vector store {vectorStoreId}");
+                        }
+                        catch (ClientResultException ex) when (ex.Status == 404)
+                        {
+                            Console.WriteLine($"[WARN] Vector store {vectorStoreId} not found (already deleted?): {ex.Message}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] Failed to delete vector store {vectorStoreId}: {ex.Message}");
+                            throw;
+                        }
+
                     }
                     catch (Exception ex)
                     {
@@ -184,7 +183,7 @@ namespace OpenAI.Examples
             Console.WriteLine("[DEBUG] Waiting for thread run to complete...");
             do
             {
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(1));
                 threadRun = await assistantClient.GetRunAsync(threadRun.ThreadId, threadRun.Id);
                 Console.WriteLine($"[DEBUG] Thread run status: {threadRun.Status}");
             } while (!threadRun.Status.IsTerminal);
@@ -238,14 +237,45 @@ namespace OpenAI.Examples
             OpenAIClient openAIClient = new(_apiKey);
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
             OpenAIFileClient fileClient = openAIClient.GetOpenAIFileClient();
+            var vectorStoreClient = openAIClient.GetVectorStoreClient();
             OpenAIFile file = null;
-            List<string> fileIds = new();
+            List<string> fileIds = new(); 
 
             //Delete old assistent if one exists
             try
             {
                 Console.WriteLine("[DEBUG] Deleting old assistant");
+                OpenAI.Assistants.Assistant assit = assistantClient.GetAssistant(course.AssistentId);
+
+                var vectorIds = assit.ToolResources
+                            .FileSearch
+                            .VectorStoreIds;
+
+
+                // get the first (and in my case only) store ID:
+                string vectorStoreId = vectorIds.FirstOrDefault();
+                if (vectorStoreId == null)
+                {
+                    vectorStoreId = "vs-default";
+                }
                 await assistantClient.DeleteAssistantAsync(course.AssistentId);
+
+                //Delete the vector store
+                try
+                {
+                    Console.WriteLine($"[DEBUG] Deleting vector store {vectorStoreId}.");
+                    await vectorStoreClient.DeleteVectorStoreAsync(vectorStoreId);
+                    Console.WriteLine($"[DEBUG] Successfully deleted vector store {vectorStoreId}");
+                }
+                catch (ClientResultException ex) when (ex.Status == 404)
+                {
+                    Console.WriteLine($"[WARN] Vector store {vectorStoreId} not found (already deleted?): {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to delete vector store {vectorStoreId}: {ex.Message}");
+                    throw;
+                }
             }
             catch (Exception ex)
             {
@@ -260,7 +290,10 @@ namespace OpenAI.Examples
                     throw;
                 }
             }
-
+            if (!Directory.Exists(directoryPath))
+            {
+                System.IO.Directory.CreateDirectory(directoryPath);
+            }
             string courseFolderName = new DirectoryInfo(directoryPath).Name;
 
             //uplaod files if needed
@@ -305,6 +338,7 @@ namespace OpenAI.Examples
                             "If the student replies affirmatively (e.g., 'yes', 'yep', 'done'), your next message should be exactly: D1o0N78e — nothing else. " +
                             "If the student replies negatively, instruct them to email their professor. " +
                             "Otherwise, continue answering their questions." +
+                            "If message is a course code (e.g., ENG101, CIS201, ECON 375) Simply reply you are ready to ansewer question on that course"+
                             "If the student seems to be struggling, confused, or repeatedly asking about the same thing 3 times,"+
                             "offer to escalate the question to their professor."+
                             "If escalation is accepted, respond with: 'ESCALATE-REQ' to flag the request in the system",
@@ -335,24 +369,55 @@ namespace OpenAI.Examples
             await _context.SaveChangesAsync();
 
             // create
-            Assistant assistant = assistantClient.CreateAssistant("gpt-4o-mini", assistantOptions);
+            Assistants.Assistant assistant = assistantClient.CreateAssistant("gpt-4o-mini", assistantOptions);
             Console.WriteLine($"[DEBUG] Assistant Created. ID: {assistant.Id}");
+
             course.AssistentId = assistant.Id;
             await _context.SaveChangesAsync();
             Console.WriteLine($"[DEBUG] Stored assistent in DB with ID: {assistant.Id}");
             return assistant.Id;
         }
 
-        public async Task DeleteAssistent(string assistantId)
+        public async System.Threading.Tasks.Task DeleteAssistent(string assistantId)
         {
             OpenAIClient openAIClient = new(_apiKey);
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
+            var vectorStoreClient = openAIClient.GetVectorStoreClient();
+            
 
             //Delete old assistent if one exists
             try
             {
                 Console.WriteLine("[DEBUG] Deleting assistant");
+                OpenAI.Assistants.Assistant assit = assistantClient.GetAssistant(assistantId);
+                var vectorIds = assit.ToolResources
+                            .FileSearch
+                            .VectorStoreIds;
+
+                // get the first (and in my case only) store ID:
+                string vectorStoreId = vectorIds.FirstOrDefault();
+                if (vectorStoreId == null)
+                {
+                    vectorStoreId = "vs-default";
+                }
                 await assistantClient.DeleteAssistantAsync(assistantId);
+
+                //Delete the vector store
+                try
+                {
+                    Console.WriteLine($"[DEBUG] Deleting vector store {vectorStoreId}.");
+                    await vectorStoreClient.DeleteVectorStoreAsync(vectorStoreId);
+                    Console.WriteLine($"[DEBUG] Successfully deleted vector store {vectorStoreId}");
+                }
+                catch (ClientResultException ex) when (ex.Status == 404)
+                {
+                    Console.WriteLine($"[WARN] Vector store {vectorStoreId} not found (already deleted?): {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to delete vector store {vectorStoreId}: {ex.Message}");
+                    throw;
+                }
             }
             catch (Exception ex)
             {
@@ -369,11 +434,12 @@ namespace OpenAI.Examples
             }
         }
 
-        public async Task DeleteDocumentsOpenAI(string DocId, string CourceDocumentsPath, string JoinKey)
+        public async System.Threading.Tasks.Task DeleteDocumentsOpenAI(string DocId, string CourceDocumentsPath, string JoinKey)
         {
             OpenAIClient openAIClient = new(_apiKey);
             OpenAIFileClient fileClient = openAIClient.GetOpenAIFileClient();
             AssistantClient assistantClient = openAIClient.GetAssistantClient();
+            var vectorStoreClient = openAIClient.GetVectorStoreClient();
             OpenAIFile file = null;
 
             try
@@ -411,7 +477,57 @@ namespace OpenAI.Examples
             {
                 //Delete Old Client
                 Console.WriteLine("[DEBUG] Deleting old assistant");
-                await assistantClient.DeleteAssistantAsync(course.AssistentId);
+                //Delete old assistent if one exists
+                try
+                {
+                    Console.WriteLine("[DEBUG] Deleting assistant");
+                    OpenAI.Assistants.Assistant assit = assistantClient.GetAssistant(course.AssistentId);
+                    var vectorIds = assit.ToolResources
+                                .FileSearch
+                                .VectorStoreIds;
+                    
+                    // get the first (and in my case only) store ID:
+                    string vectorStoreId = vectorIds.FirstOrDefault();
+                    
+                    if(vectorStoreId == null)
+                    {
+                        vectorStoreId = "vs-default";
+                    }
+
+                    await assistantClient.DeleteAssistantAsync(course.AssistentId);
+
+                    //Delete the vector store
+                    
+                    try
+                    {
+                        Console.WriteLine($"[DEBUG] Deleting vector store {vectorStoreId}.");
+                        await vectorStoreClient.DeleteVectorStoreAsync(vectorStoreId);
+                        Console.WriteLine($"[DEBUG] Successfully deleted vector store {vectorStoreId}");
+                    }
+                    catch (ClientResultException ex) when (ex.Status == 404)
+                    {
+                        Console.WriteLine($"[WARN] Vector store {vectorStoreId} not found (already deleted?): {ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Failed to delete vector store {vectorStoreId}: {ex.Message}");
+                        throw;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("No assistant found with id") || ex.Message.Contains("Value cannot be null. (Parameter 'assistantId')"))
+                    {
+                        Console.WriteLine("[DEBUG] Assistant either is already deleted or has not been created yet.");
+                    }
+                    else
+                    {
+                        // Log or rethrow other exceptions
+                        Console.WriteLine($"[ERROR] Unexpected error: {ex.Message}");
+                        throw;
+                    }
+                }
+
             }
             else 
             {
