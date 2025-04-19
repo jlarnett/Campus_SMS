@@ -48,7 +48,9 @@ builder.Services.AddTransient<SmsService>();
 builder.Services.AddTransient<AiService>();
 builder.Services.AddTransient<AiServiceVectorStore>();
 
+
 builder.Services.AddDefaultIdentity<AppUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddAuthentication(options =>
@@ -91,9 +93,18 @@ var app = builder.Build();
 //Automatically Apply DB migrations
 using var scope = app.Services.CreateScope();
 using var appContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+using var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
 //Apply DB migrations
- appContext.Database.Migrate();
+appContext.Database.Migrate();
+
+string[] roles = {"Admin", "Faculty"};
+
+foreach(var role in roles) {
+    var exists = await roleManager.RoleExistsAsync(role);
+    if(!exists)
+        await roleManager.CreateAsync(new IdentityRole(role));
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
