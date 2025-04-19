@@ -26,7 +26,7 @@ namespace Campus_SMS.Controllers
             _signInManager = signInManager;
         }
 
-        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int minPhraseLength = 2, int maxPhraseLength = 3)
+        public static Dictionary<string, int> FindCommonWordsAndPhrases(List<string> strings, int minPhraseLength = 3, int maxPhraseLength = 9)
         {
             var phraseCounts = new Dictionary<string, int>();
 
