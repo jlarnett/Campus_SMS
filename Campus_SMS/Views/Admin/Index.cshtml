@@ -9,11 +9,6 @@
 <!--Select2 to make the select searchable-->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-<!--Script that switches the displayed infomation on screen based off what tab is hit-->
-<script src="~/js/tabs.js" defer></script>
-
-
-
 <body>
 <div class="admin-dashboard">
     <!-- Header -->
@@ -24,15 +19,8 @@
     <ul class="tabs-nav">
         <li data-tab-target="#faculty" class="tab active">Faculty</li>
         <li data-tab-target="#students" class="tab">Students</li>
-        <li data-tab-target="#courses" class="tab">Course Management</li>
     </ul>
-    <!--example for how to add database info-->
-    @{
-        @foreach (var course in Model.Classes)
-        {
-            <div>@course.UsiClassIdentifier</div>
-        }
-    }
+   
     <!-- Tab Content Wrapper -->
     <div class="tab-content">
         <!-- Faculty Tab -->
@@ -83,20 +71,62 @@
             </section>
         </div>
 </div>
+        <!-- Students Tab -->
+        <div id="students" data-tab-content class="admin-body">
+            <div class="tab-section student-tab">
+                <!-- Sidebar: Student List -->
+                <div class="sidebar student-list">
+                    <h2>Student List</h2>
+                    <input type="text" class="search-bar" placeholder="Search students..." />
+                    <select id="studentSelect">
+                        <option value="">--Select Number--</option>
+                        @if (Model.SmsUsers != null)
+                        {
+                            foreach (var smsUser in Model.SmsUsers)
+                            {
+                                <option value="@smsUser.Id">@smsUser.PhoneNumber</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Main Content: Student Details & Chat -->
+                <div class="main-content student-details">
+                    <!-- Student Information -->
+                    <div id="studentInfo" class="student-info">
+                        <!--Student number shows up here-->
+                    </div>
+                    <div class="student-info">
+                        <h3>Enrolled Classes</h3>
+                        <ul id="enrolledCourse" class="classes">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>
+
 </body>
 <!--Keep this at the bottom-->
 @section Scripts{
+    <!--Script that switches the displayed infomation on screen based off what tab is hit-->
+    <script src="~/js/tabs.js" defer></script>
     <!--Scripts for Select 2-->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!--Script that makes it show the selected faculty's' information-->
     <script src="~/js/FacultyInformation.js" defer></script>
-
+    <script src="~/js/StudentInformation.js" defer></script>
     <script>
         $(document).ready(function () {
             $('#facultySelect').select2({
                 placeholder: "-- Select Faculty --",
+                allowClear: true,
+                width: 'resolve'
+            });
+            $('#studentSelect').select2({
+                placeholder: "-- Select Number --",
                 allowClear: true,
                 width: 'resolve'
             });

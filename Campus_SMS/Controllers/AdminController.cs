@@ -3,6 +3,8 @@ using Campus_SMS.Data; // for ApplicationDbContext
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Campus_SMS.Views.Admin.Vms;
+using Campus_SMS.Models;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Campus_SMS.Controllers
 {
@@ -58,6 +60,22 @@ namespace Campus_SMS.Controllers
                 lastName = faculty.LastName,
                 email = faculty.Email,
                 classesList = classes
+            });
+        }
+
+        public JsonResult GetSMSInfo(int id)
+        {
+            var smsUser = _context.SmsUsers.FirstOrDefault(s => s.Id == id);
+
+            if (smsUser == null)
+            {
+                return Json(new { error = "Can't find SMS user" });
+            }
+
+            return Json(new
+            {
+                phoneNumber = smsUser.PhoneNumber,
+                enrolledCourses = smsUser.EnrolledCourses ?? new List<string>()
             });
         }
         
