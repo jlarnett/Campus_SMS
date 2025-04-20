@@ -16,19 +16,20 @@
         <h1>Hello, @User.Identity.Name</h1>
     </header>
     <!-- Top Tab Navigation -->
-    <ul class="tabs-nav">
+    <div></div>
+        <ul class="tabs-nav" style="background-color:#003366;">
+        <li class="tab">Tabs:</li>
         <li data-tab-target="#faculty" class="tab active">Faculty</li>
-        <li data-tab-target="#students" class="tab">Students</li>
+        <li data-tab-target="#students" class="tab active">Students</li>
     </ul>
    
     <!-- Tab Content Wrapper -->
-    <div class="tab-content">
+    <div class="tab-content" style="margin-top:24px;">
         <!-- Faculty Tab -->
         <div id="faculty" data-tab-content class="tabDisplay admin-body">
             <!-- Sidebar: Faculty List -->
             <aside class="sidebar">
                 <h2 class="sidebar-title">Faculty List</h2>
-                <input type="text" placeholder="Search" class="sidebar-search" />
                 <select  id="facultySelect">
                     <option value="">-Select Faculty-</option>
                     @if (Model.Faculty != null)
@@ -39,8 +40,6 @@
                         }
                     }
                 </select>
-                <!--This button needs fuctionality added-->
-                <button class="add-member" data-action="addFaculty">+ Add Faculty Member</button>
             </aside>
             <!-- Main Content: Faculty Details -->
             <section class="main-content">
@@ -48,24 +47,12 @@
                     <!--Shows the Name and Email of the selected professor, its added through the FacultyInformation.js-->
                 </div>
                 <div class="admin-panels">
-                    <!-- Permissions Panel -->
-                    <div class="admin-panel">
-                        <h3 class="panel-title">Permissions</h3>
-                        <ul class="toggle-list">
-                            <!--I need to talk to someone about adding Permissions to the faculty database and making them function-->
-                            <li></li>
-                        </ul>
-                        <!--This button needs functionality added-->
-                        <button class="remove-user" data-faculty-id="@Model.Faculty">Remove User</button>
-                    </div>
                     <!-- Classes Panel -->
-                    <div class="admin-panel">
+                    <div class="admin-panel student-info">
                         <h3 class="panel-title">Classes</h3>
-                        <ul id="facultyCourse" class="class-list">
+                        <ul id="facultyCourse" class="classes">
                             <!--adds a list of courses for selected faculty from the JS-->
                         </ul>
-                        <!--This button needs fuctionality-->
-                        <button class="add-class" data-faculty-id="@Model.Faculty">Add New Class</button>
                     </div>
                 </div>
             </section>
@@ -76,8 +63,7 @@
             <div class="tab-section student-tab">
                 <!-- Sidebar: Student List -->
                 <div class="sidebar student-list">
-                    <h2>Student List</h2>
-                    <input type="text" class="search-bar" placeholder="Search students..." />
+                    <h2 class="sidebar-title">Student List</h2>
                     <select id="studentSelect">
                         <option value="">--Select Number--</option>
                         @if (Model.SmsUsers != null)
@@ -91,18 +77,19 @@
                 </div>
 
                 <!-- Main Content: Student Details & Chat -->
-                <div class="main-content student-details">
+                <section class="main-content">
                     <!-- Student Information -->
-                    <div id="studentInfo" class="student-info">
+                    <div id="studentInfo">
                         <!--Student number shows up here-->
                     </div>
-                    <div class="student-info">
-                        <h3>Enrolled Classes</h3>
-                        <ul id="enrolledCourse" class="classes">
-
-                        </ul>
+                    <div class="admin-panels student-info">
+                        <div class="admin-panel">
+                            <h3>Enrolled Classes</h3>
+                            <ul id="enrolledCourse" class="classes">
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
 </div>
@@ -123,12 +110,12 @@
             $('#facultySelect').select2({
                 placeholder: "-- Select Faculty --",
                 allowClear: true,
-                width: 'resolve'
+                width: '200px'
             });
             $('#studentSelect').select2({
                 placeholder: "-- Select Number --",
                 allowClear: true,
-                width: 'resolve'
+                width: '200px'
             });
         });
     </script>

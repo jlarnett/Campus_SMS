@@ -163,11 +163,17 @@ a {
 
 /* Tabs */
 .tab {
+    display: inline;
+    float: left;
     font-family: 'Roboto', sans-serif;
     font-size: 16px;
-    padding: 10px;
+    padding: 0;
     text-decoration: none;
+    list-style-type: none;
     color: #003366; /* USI Blue */
+    margin-right: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #003366;
 }
 .tab:hover {
     cursor: pointer;
@@ -184,7 +190,7 @@ a {
     .tabs-nav .tab {
         flex: 1;
         text-align: center;
-        padding: 12px 0;
+        padding: 0;
         cursor: pointer;
         transition: background-color 0.3s ease, color 0.3s ease;
         color: #003366;
@@ -199,7 +205,6 @@ a {
             font-weight: bold;
             background-color: #003366;
             color: #fff;
-            border-bottom: 3px solid #003366;
         }
 /* ============================================================ */
 
@@ -290,7 +295,7 @@ a {
         font-family: 'Roboto', sans-serif;
         font-size: 20px;
         font-weight: bold;
-        color: #003366; /* USI Blue */
+        color: white; 
     }
 
 .sidebar-search {
@@ -661,4 +666,15 @@ a {
     .analytics-metrics {
         flex-direction: column;
     }
+}
+
+.remove-btn {
+    display: inline-block !important;
+    padding: 4px 10px;
+    margin-left: 10px;
+    background-color: crimson;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }

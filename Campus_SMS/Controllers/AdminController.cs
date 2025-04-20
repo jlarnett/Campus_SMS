@@ -44,6 +44,7 @@ namespace Campus_SMS.Controllers
                 .Where(c => classMapping.Contains(c.Id))
                 .Select (c => new
                 {
+                    classId = c.Id,
                     className =c.ClassDescription,
                     usiCode = c.UsiClassIdentifier
                 })
@@ -78,7 +79,54 @@ namespace Campus_SMS.Controllers
                 enrolledCourses = smsUser.EnrolledCourses ?? new List<string>()
             });
         }
-        
+
+        public IActionResult RemoveEnrolledCourse([FromBody] RemoveCourseRequest request)
+        {
+
+            var user = _context.SmsUsers.FirstOrDefault(s => s.Id == request.UserId);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            if (user.EnrolledCourses == null)
+            {
+                return Json(new { success = false, message = "Course list is null." });
+            }
+
+            if (!user.EnrolledCourses.Contains(request.Course))
+            {
+                return Json(new { success = false, message = "Course not in list." });
+            }
+
+            user.EnrolledCourses.Remove(request.Course);
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
+        public IActionResult RemoveFacultyCourse([FromBody] RemoveFacultyCourseRequest request)
+        {
+            try
+            {
+                var mapping = _context.ClassProfessorMappings
+                    .FirstOrDefault(m => m.AppUserId == request.FacultyId && m.ClassCourseId == request.CourseId);
+
+                if (mapping == null)
+                    return Json(new { success = false, message = "Mapping not found" });
+
+                _context.ClassProfessorMappings.Remove(mapping);
+                _context.SaveChanges();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         public IActionResult ManageStudents()
         {
             
