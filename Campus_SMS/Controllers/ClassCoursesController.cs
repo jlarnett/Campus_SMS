@@ -36,7 +36,19 @@ namespace Campus_SMS.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            var courses = await _context.Courses.ToListAsync();
+            List<ClassCourse> courses;
+
+            if(User.IsInRole("admin")) {
+                courses = await _context.Courses.ToListAsync();
+            }
+            else
+            {
+                courses =
+                    await _context.ClassProfessorMappings.Where(c => c.AppUser.Id.Equals(_userManager.GetUserId(User)))
+                        .Include(c => c.Class)
+                        .Select(c => c.Class)
+                        .ToListAsync();
+            }
 
             foreach (var course in courses)
             {
