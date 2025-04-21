@@ -98,7 +98,7 @@ using var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Ide
 //Apply DB migrations
 appContext.Database.Migrate();
 
-string[] roles = {"Admin", "Faculty"};
+string[] roles = ["admin", "faculty"];
 
 foreach(var role in roles) {
     var exists = await roleManager.RoleExistsAsync(role);
