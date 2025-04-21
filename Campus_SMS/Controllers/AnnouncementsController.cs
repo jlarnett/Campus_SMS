@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Campus_SMS.Data;
 using Campus_SMS.Entities;
+using Campus_SMS.Entities.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 
 namespace Campus_SMS.Controllers
 {
@@ -16,11 +18,13 @@ namespace Campus_SMS.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly SmsService _smsService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public AnnouncementsController(ApplicationDbContext context, SmsService smsService)
+        public AnnouncementsController(ApplicationDbContext context, SmsService smsService, UserManager<AppUser> userManager)
         {
             _context = context;
             _smsService = smsService;
+            _userManager = userManager;
         }
 
         // GET: Announcements
@@ -53,9 +57,15 @@ namespace Campus_SMS.Controllers
 
         // GET: Announcements/Create
         [Authorize]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "UsiClassIdentifier");
+            var courses =
+                await _context.ClassProfessorMappings.Where(c => c.AppUser.Id.Equals(_userManager.GetUserId(User)))
+                    .Include(c => c.Class)
+                    .Select(c => c.Class)
+                    .ToListAsync();
+
+            ViewData["CourseId"] = new SelectList(courses, "Id", "UsiClassIdentifier");
             return View();
         }
 

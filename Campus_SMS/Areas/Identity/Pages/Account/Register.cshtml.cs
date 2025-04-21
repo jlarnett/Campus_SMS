@@ -117,7 +117,15 @@ namespace Campus_SMS.Areas.Identity.Pages.Account
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
+                var roleInsertSuccess = await _userManager
+                    .AddToRolesAsync(user, new List<string>{"Admin"});
+
+                if (roleInsertSuccess.Succeeded)
+                    _logger.LogInformation("Add new user to faculty role successfully");
+                else
+                    _logger.LogError("Failed to add new user to role");
 
                 if (result.Succeeded)
                 {

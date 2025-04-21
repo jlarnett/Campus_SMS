@@ -23,7 +23,7 @@ namespace Campus_SMS.Entities
         //Unique key for joining a class's SmS service.
         public string? JoinKey { get; set; } = string.Empty;
 
-        public string? AssistentId { get; set; }    
+        public string? AssistentId { get; set; }
 
         public List<string>? BlockedNumbers { get; set; }
     }

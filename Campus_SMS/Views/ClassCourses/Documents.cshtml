@@ -17,13 +17,17 @@
         var directoryInfo = new DirectoryInfo(pathToCourseDocuments);
         files = directoryInfo.GetFiles();
     }
+    else
+    {
+        System.IO.Directory.CreateDirectory(pathToCourseDocuments);
+    }
 
 }
 
 <!-- Add file upload form -->
 <form asp-action="UploadFile" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return validateFileUpload(event, this, @Model.Id);">
     <div class="input-group">
-        <input type="file" name="file" id="fileInput-@Model.Id" class="form-control" onchange="updateFileName(this, @Model.Id);" hidden>
+        <input type="file" name="file" id="fileInput-@Model.Id" class="form-control" accept=".c,.cpp,.cs,.css,.doc,.docx,.go,.html,.java,.js,.json,.md,.pdf,.php,.pptx,.py,.rb,.sh,.tex,.ts,.txt" onchange="updateFileName(this, @Model.Id);" hidden>
         <label for="fileInput-@Model.Id" class="btn btn-outline-primary">Choose File</label>
         <button type="submit" class="btn btn-success" onclick="event.stopPropagation();">Upload</button>
     </div>
@@ -85,6 +89,29 @@
                 event.preventDefault();
                 return false;
             }
+
+            const file = fileInput.files[0];
+            const name = file.name;
+            const ext = name.slice(name.lastIndexOf(".")).toLowerCase();
+
+            if (file.size > 52428800)
+            {
+                fileError.textContent = `The file is too big. Must be less than 50 MB.`;
+                fileError.style.display = "block";
+                return false;
+            }
+
+            const allowed = [
+            ".c", ".cpp", ".cs", ".css", ".doc", ".docx", ".go", ".html", ".java",
+            ".js", ".json", ".md", ".pdf", ".php", ".pptx", ".py", ".rb", ".sh",
+            ".tex", ".ts", ".txt"
+        ];
+
+        if (!allowed.includes(ext)) {
+            fileError.textContent = `The file type “${ext}” is not supported.`;
+            fileError.style.display = "block";
+            return false;
+        }
 
             const fileName = fileInput.files[0].name;
             console.log("Selected file:", fileName);

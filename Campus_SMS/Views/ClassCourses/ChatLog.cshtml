@@ -20,9 +20,37 @@
     @foreach (var group in Model.GroupedLogs)
     {
         <div class="border rounded mb-3 shadow-sm">
-            <button class="btn btn-link w-100 text-start" data-bs-toggle="collapse" data-bs-target="#chat-@group.Key.GetHashCode()">
-                @FormatPhoneNumber(group.Key) — First Message: @group.Value.FirstOrDefault()?.IncomingSmsMessage
-            </button>
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <button class="btn btn-link text-start flex-grow-1" data-bs-toggle="collapse" data-bs-target="#chat-@group.Key.GetHashCode()">
+                    @FormatPhoneNumber(group.Key) — First Message: @group.Value.FirstOrDefault()?.IncomingSmsMessage
+                </button>
+                @if (!(Model.Class.BlockedNumbers ?? new List<string>()).Contains(group.Key))
+                {
+                    <form asp-action="AddBlockedNumber"
+                    asp-route-id="@Model.Class.Id"
+                      asp-route-phoneNumber="@group.Key"
+                      method="post"
+                      onsubmit="event.stopPropagation();"
+                      class="ms-2">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-slash-circle me-1"></i> Block Number
+                    </button>
+                </form>
+                }
+                else
+                {
+                    <form asp-action="RemoveBlockedNumber"
+                          asp-route-id="@Model.Class.Id"
+                          asp-route-phoneNumber="@group.Key"
+                          method="post"
+                          onsubmit="event.stopPropagation();"
+                          class="ms-2">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> Unblock Number
+                        </button>
+                    </form>
+                }
+            </div>
             <div id="chat-@group.Key.GetHashCode()" class="collapse">
                 <div class="p-3" style="background-color: #f1f1f1; max-height: 400px; overflow-y: auto;">
                     @foreach (var msg in group.Value.OrderBy(m => m.TimeReceived))

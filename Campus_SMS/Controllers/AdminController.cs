@@ -1,15 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+
+using Microsoft.AspNetCore.Mvc;
 using Campus_SMS.Data; // for ApplicationDbContext
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Campus_SMS.Views.Admin.Vms;
 using Campus_SMS.Models;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace Campus_SMS.Controllers
 {
     public class AdminController(ApplicationDbContext context, ILogger<AdminController> logger) : Controller
     {
+
         private readonly ApplicationDbContext _context = context;
         private readonly ILogger<AdminController> _logger = logger;
 
@@ -128,6 +133,10 @@ namespace Campus_SMS.Controllers
         }
 
         public IActionResult ManageStudents()
+
+        [Authorize(Roles = "admin")]
+        public IActionResult Index()
+
         {
             
             return View();
@@ -138,16 +147,20 @@ namespace Campus_SMS.Controllers
             return View();
         }
 
+
+        [Authorize(Roles = "admin")]
         public IActionResult ManageCourses()
         {
             return View();
         }
 
+        [Authorize(Roles = "admin")]
         public IActionResult ManageDocuments()
         {
             return View();
         }
 
+        [Authorize(Roles = "admin")]
         public IActionResult ViewAnalytics()
         {
             return View();
