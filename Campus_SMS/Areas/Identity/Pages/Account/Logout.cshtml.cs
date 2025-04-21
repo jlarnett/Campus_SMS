@@ -29,7 +29,7 @@ namespace Campus_SMS.Areas.Identity.Pages.Account
         {
             var domain = "dev-7aktrm4prqivmcb1.us.auth0.com";
             var clientId = "Yh6n7TYtyRiF8BcqugDt2K4K5LFR4SCQ";
-            var returnTo = Url.Page("/Index", null, null, Request.Scheme);
+            var returnTo = $"{Request.Scheme}://{Request.Host}/";
 
             var logoutUrl = $"https://{domain}/v2/logout?client_id={clientId}&returnTo={Uri.EscapeDataString(returnTo)}";
 
