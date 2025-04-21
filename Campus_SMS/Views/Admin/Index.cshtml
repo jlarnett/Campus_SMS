@@ -1,19 +1,122 @@
-﻿@{
-    ViewData["Title"] = "Admin Dashboard";
+﻿@using Campus_SMS.Views.Admin.Vms
+@model AdminDashboardViewModel
+
+@{
+   ViewData["Title"] = "Admin Dashboard";
 }
 
-<h2 class="text-center mt-4">Admin Dashboard</h2>
+<link href="~/css/admin.css" rel="stylesheet">
+<!--Select2 to make the select searchable-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <a asp-action="ManageCourses" class="btn btn-primary w-100">Manage Courses</a>
+<body>
+<div class="admin-dashboard">
+    <!-- Header -->
+    <header class="admin-header">
+        <h1>Hello, @User.Identity.Name</h1>
+    </header>
+    <!-- Top Tab Navigation -->
+    <div></div>
+        <ul class="tabs-nav" style="background-color:#003366;">
+        <li class="tab">Tabs:</li>
+        <li data-tab-target="#faculty" class="tab active">Faculty</li>
+        <li data-tab-target="#students" class="tab active">Students</li>
+    </ul>
+   
+    <!-- Tab Content Wrapper -->
+    <div class="tab-content" style="margin-top:24px;">
+        <!-- Faculty Tab -->
+        <div id="faculty" data-tab-content class="tabDisplay admin-body">
+            <!-- Sidebar: Faculty List -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Faculty List</h2>
+                <select  id="facultySelect">
+                    <option value="">-Select Faculty-</option>
+                    @if (Model.Faculty != null)
+                    {
+                        foreach (var faculty in Model.Faculty)
+                        {
+                            <option value="@faculty.Id">@faculty.FirstName @faculty.LastName</option>
+                        }
+                    }
+                </select>
+            </aside>
+            <!-- Main Content: Faculty Details -->
+            <section class="main-content">
+                <div id="facultyInfo" class="admin-info">
+                    <!--Shows the Name and Email of the selected professor, its added through the FacultyInformation.js-->
+                </div>
+                <div class="admin-panels">
+                    <!-- Classes Panel -->
+                    <div class="admin-panel student-info">
+                        <h3 class="panel-title">Classes</h3>
+                        <ul id="facultyCourse" class="classes">
+                            <!--adds a list of courses for selected faculty from the JS-->
+                        </ul>
+                    </div>
+                </div>
+            </section>
         </div>
-        <div class="col-md-4 mb-3">
-            <a asp-action="ManageDocuments" class="btn btn-secondary w-100">Manage Documents</a>
-        </div>
-        <div class="col-md-4 mb-3">
-            <a asp-action="ViewAnalytics" class="btn btn-info w-100">View Analytics</a>
-        </div>
-    </div>
 </div>
+        <!-- Students Tab -->
+        <div id="students" data-tab-content class="admin-body">
+            <div class="tab-section student-tab">
+                <!-- Sidebar: Student List -->
+                <div class="sidebar student-list">
+                    <h2 class="sidebar-title">Student List</h2>
+                    <select id="studentSelect">
+                        <option value="">--Select Number--</option>
+                        @if (Model.SmsUsers != null)
+                        {
+                            foreach (var smsUser in Model.SmsUsers)
+                            {
+                                <option value="@smsUser.Id">@smsUser.PhoneNumber</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Main Content: Student Details & Chat -->
+                <section class="main-content">
+                    <!-- Student Information -->
+                    <div id="studentInfo">
+                        <!--Student number shows up here-->
+                    </div>
+                    <div class="admin-panels student-info">
+                        <div class="admin-panel">
+                            <h3>Enrolled Classes</h3>
+                            <ul id="enrolledCourse" class="classes">
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+</div>
+
+</body>
+<!--Keep this at the bottom-->
+@section Scripts{
+    <!--Script that switches the displayed infomation on screen based off what tab is hit-->
+    <script src="~/js/tabs.js" defer></script>
+    <!--Scripts for Select 2-->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!--Script that makes it show the selected faculty's' information-->
+    <script src="~/js/FacultyInformation.js" defer></script>
+    <script src="~/js/StudentInformation.js" defer></script>
+    <script>
+        $(document).ready(function () {
+            $('#facultySelect').select2({
+                placeholder: "-- Select Faculty --",
+                allowClear: true,
+                width: '200px'
+            });
+            $('#studentSelect').select2({
+                placeholder: "-- Select Number --",
+                allowClear: true,
+                width: '200px'
+            });
+        });
+    </script>
+}

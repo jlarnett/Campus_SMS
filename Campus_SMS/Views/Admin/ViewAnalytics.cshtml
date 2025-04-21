@@ -1,25 +1,81 @@
-﻿@{
-    ViewData["Title"] = "Analytics Dashboard";
-}
+﻿<div class="faculty-dashboard">
 
-<h2 class="text-center mt-4">@ViewData["Title"]</h2>
+    <!-- First Row -->
+    <div class="dashboard-section">
+        <div class="dashboard-panel">
+            <h3 class="chart-title">SMS Count</h3>
+            <div class="chart-container">
+                <canvas id="smsChart"></canvas>
+            </div>
+        </div>
 
-<div class="container mt-5">
-    <canvas id="chart1" width="400" height="200"></canvas>
+        <div class="dashboard-panel">
+            <h3 class="chart-title">Escalations</h3>
+            <div class="chart-container">
+                <!-- You can later add a chart here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="dashboard-section">
+        <div class="dashboard-panel">
+            <h3 class="chart-title">Common Questions</h3>
+            <div class="chart-container">
+                <canvas id="questionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-panel">
+            <h3 class="chart-title">Response Time</h3>
+            <div class="chart-container">
+                <canvas id="responseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('chart1').getContext('2d');
-        const myChart = new Chart(ctx, {
+        const smsCtx = document.getElementById('smsChart').getContext('2d');
+        new Chart(smsCtx, {
             type: 'bar',
             data: {
-                labels: ['Red', 'Blue', 'Yellow'],
+                labels: ['Course A', 'Course B'],
                 datasets: [{
-                    label: 'Sample Data',
-                    data: [12, 19, 3],
-                    backgroundColor: ['#f87171', '#60a5fa', '#facc15']
+                    label: '# of messages per Course',
+                    data: [5, 8],
+                    backgroundColor: '#60a5fa'
+                }]
+            }
+        });
+
+        const questionCtx = document.getElementById('questionChart').getContext('2d');
+        new Chart(questionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: 'Questions',
+                    data: [12, 19, 3, 5, 2, 3],
+                    backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#f97316']
+                }]
+            }
+        });
+
+        const responseCtx = document.getElementById('responseChart').getContext('2d');
+        new Chart(responseCtx, {
+            type: 'line',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [12, 19, 3, 5, 2, 3],
+                    fill: false,
+                    borderColor: '#60a5fa',
+                    tension: 0.1
                 }]
             }
         });
