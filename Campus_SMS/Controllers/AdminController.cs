@@ -7,7 +7,6 @@ using Campus_SMS.Views.Admin.Vms;
 using Campus_SMS.Models;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 
 namespace Campus_SMS.Controllers
@@ -18,6 +17,7 @@ namespace Campus_SMS.Controllers
         private readonly ApplicationDbContext _context = context;
         private readonly ILogger<AdminController> _logger = logger;
 
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Index(AdminDashboardViewModel adminDashboardViewModel)
         {
             AdminDashboardViewModel model = new()
@@ -131,17 +131,13 @@ namespace Campus_SMS.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
-        public IActionResult ManageStudents()
-
         [Authorize(Roles = "admin")]
-        public IActionResult Index()
-
+        public IActionResult ManageStudents()
         {
-            
             return View();
         }
 
+        [Authorize(Roles = "admin")]
         public IActionResult ManageFaculty()
         {
             return View();
