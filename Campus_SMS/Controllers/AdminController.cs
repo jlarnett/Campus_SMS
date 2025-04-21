@@ -17,7 +17,7 @@ namespace Campus_SMS.Controllers
         private readonly ApplicationDbContext _context = context;
         private readonly ILogger<AdminController> _logger = logger;
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(AdminDashboardViewModel adminDashboardViewModel)
         {
             AdminDashboardViewModel model = new()
@@ -131,32 +131,31 @@ namespace Campus_SMS.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public IActionResult ManageStudents()
         {
             return View();
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public IActionResult ManageFaculty()
         {
             return View();
         }
 
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public IActionResult ManageCourses()
         {
             return View();
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public IActionResult ManageDocuments()
         {
             return View();
         }
-
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public IActionResult ViewAnalytics()
         {
             return View();
