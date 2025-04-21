@@ -38,7 +38,7 @@ namespace Campus_SMS.Controllers
         {
             List<ClassCourse> courses;
 
-            if(User.IsInRole("admin")) {
+            if(User.IsInRole("Admin")) {
                 courses = await _context.Courses.ToListAsync();
             }
             else
