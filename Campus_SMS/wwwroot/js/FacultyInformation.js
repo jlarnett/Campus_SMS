@@ -19,8 +19,7 @@
                         }
 
                         let htmlFaculty = `
-                            <h2>${data.firstName} ${data.lastName}</h2>
-                            <p><strong>Email:</strong> ${data.email}</p>
+                            <h2>${data.email}</h2>
                         `;
 
                         let htmlCourse = "";
