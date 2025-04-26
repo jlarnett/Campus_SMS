@@ -74,11 +74,30 @@ Twilio--AuthToken=your_twilio_authtoken
 Twilio--FromPhoneNumber=your_twilio_from_phoneNumber
 ```
 
-### **4. Run the Application**
+### **4. Configure Github Action Repository Secrets**
+For the github actions to work it will be required to modify/add the CLIENTID, TENANTID, SUBSCRIPTIONID secrets to your github repository
+![image](https://github.com/user-attachments/assets/ba65e602-8bf0-43cb-9485-dfc5b37c68cd)
+
+**Filename: master_campussms.yml will also require updating to reflect your Github Action Repository Secrets & Azure**
+```yaml
+client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D519706307304135AA6D88CFD61FDFF1 }}
+tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E31E3149FC4C48848DD609C3BDDC5CF7 }}
+subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_19A0F0BC1FDB4DB3AECB88429F84DD42 }}
+```
+
+
+### **5. Run the Application**
 
 ```powershell
 dotnet run   #Starts both backend and frontend components
 ```
+
+### **Lastly Cloud Considerations**
+If using Azure it may be required to setup managed Identity for the Campus SMS App Service
+to integrate with DB successfully. Owner, or reader/writer permissions will have to be given to the app service on the DB Server IAM (Access Control) roles selections
+Otherwise you will run into permission problems
+
+![image](https://github.com/user-attachments/assets/f4e08809-492b-440e-a4c4-b08af9e23b1b)
 
 ## **Future Enhancements**
 
