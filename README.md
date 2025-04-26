@@ -2,7 +2,7 @@
 
 ## **Project Overview**
 
-Campus\_SMS is an **AI-powered SMS chatbot** designed to provide students with academic support outside standard faculty hours. It integrates **Twilio for SMS communication** and **AI (Copilot/Ollama) for generating responses**. If the AI cannot confidently answer a query, it offers **faculty escalation** via email and a web portal.
+Campus\_SMS is an **AI-powered SMS chatbot** designed to provide students with academic support outside standard faculty hours. It integrates **Twilio for SMS communication** and **AI (Open AI GPT) for generating responses**. If the AI cannot confidently answer a query, it offers **faculty escalation** via email and a web portal.
 
 ## **How It Works**
 
@@ -15,7 +15,7 @@ Campus\_SMS is an **AI-powered SMS chatbot** designed to provide students with a
 
 ## **Key Features**
 
-- **AI-Powered SMS Assistance**: Uses **Copilot/Ollama** for automated responses.
+- **AI-Powered SMS Assistance**: Uses **Open AI GPT** for automated responses.
 - **Twilio SMS Integration**: Handles student interactions through text messaging.
 - **Faculty Escalation System**: Emails unanswered queries to faculty for manual responses.
 - **Admin Dashboard**: Faculty/admins manage AI responses, escalations, and send SMS announcements.
@@ -52,31 +52,32 @@ git clone https://github.com/jlarnett/Campus_SMS.git
 cd Campus_SMS
 ```
 
-### **2. Install Dependencies**
+### **2. Install Dotnet Nuget Dependencies**
 
-```bash
-npm install   # If using Node.js frontend
+```powershell
+dotnet restore
 ```
 
 ### **3. Configure API Keys**
 
-Create a `.env` file with:
-
+API keys are currently stored via Visual Studio User Secrets or held in Azure Key Vault
+If cloning repo, you may have to change the appsetttings.json value for "KeyVaultName" to pull keys from your azure key store
+If stored correctly, the keys should be accessed via calls like so builder.Configuration["OpenAI:RobertAPIKey"]
 ```
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-AI_API_KEY=your_ai_api_key
-DATABASE_URL=your_database_url
+Auth0--CallbackPath=your_auth0_callbackUrlPath
+Auth0--ClientId=your_auth0_clientId
+Auth0--ClientSecret=your_auth0_clientSecret
+Auth0--Domain=your_auth0_domain
+OpenAI--RobertAPIKey=your_openAI_key
+Twilio--AccountSID=your_account_sid
+Twilio--AuthToken=your_twilio_authtoken
+Twilio--FromPhoneNumber=your_twilio_from_phoneNumber
 ```
 
 ### **4. Run the Application**
 
-```bash
-npm start    # For frontend
-```
-
-```bash
-dotnet run   # For backend
+```powershell
+dotnet run   #Starts both backend and frontend components
 ```
 
 ## **Future Enhancements**
